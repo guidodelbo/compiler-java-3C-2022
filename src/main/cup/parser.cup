@@ -4,17 +4,50 @@ import java_cup.runtime.*;
 
 class Parser;
 
-
 // Terminals
-terminal ASSIG;
 terminal PLUS;
 terminal SUB;
 terminal MULT;
 terminal DIV;
+terminal ASSIG;
+
+//Comparison operators
+terminal NOT;
+terminal GREATER;
+terminal LESS;
+terminal AND;
+terminal OR;
+
+/// Palabras reservadas 
+terminal IF;
+terminal ELSE;
+terminal WHILE;
+terminal WRITE;
+terminal READ;
+terminal INIT;
+terminal INTEGERTYPE;
+terminal FLOATTYPE;
+terminal STRINGTYPE;
+terminal ELEMENTINTHEMIDDLE;
+terminal FIBONACCI;
+
+//Other symbols
 terminal OPEN_BRACKET;
 terminal CLOSE_BRACKET;
-terminal INTEGER_CONSTANT;
+terminal OPEN_SQUAREBRACKET;
+terminal CLOSE_SQUAREBRACKET;
+terminal OPEN_CURLYBRACKET;
+terminal CLOSE_CURLYBRACKET;
+terminal COMMA;
+terminal DOT;
+terminal COLON;
+terminal SEMICOLON;
+
+/// Identificadores y Constantes
 terminal IDENTIFIER;
+terminal INTEGER_CONSTANT;
+terminal FLOAT_CONSTANT;
+terminal STRING_CONSTANT;
 
 // Non Terminals
 non terminal sentence;
@@ -37,3 +70,6 @@ term ::= factor {: System.out.println("Term = factor"); :};
 factor ::= IDENTIFIER:id  {: System.out.println("Id: " + id); :};
 factor ::= INTEGER_CONSTANT:constant {: System.out.println("Constant: " + constant ); :};
 factor ::= OPEN_BRACKET expression CLOSE_BRACKET {: System.out.println("Factor = (Expression)"); :};
+
+
+
