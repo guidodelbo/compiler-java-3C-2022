@@ -1,28 +1,27 @@
 package lyc.compiler;
 
-import lyc.compiler.factories.LexerFactory;
-import lyc.compiler.model.CompilerException;
-import lyc.compiler.model.InvalidIntegerException;
-import lyc.compiler.model.InvalidLengthException;
-import lyc.compiler.model.UnknownCharacterException;
+import static com.google.common.truth.Truth.assertThat;
+import static lyc.compiler.constants.Constants.MAX_STRING;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.io.IOException;
+
 import org.apache.commons.text.CharacterPredicates;
 import org.apache.commons.text.RandomStringGenerator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-
-import static com.google.common.truth.Truth.assertThat;
-import static lyc.compiler.constants.Constants.MAX_LENGTH;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
+import lyc.compiler.factories.LexerFactory;
+import lyc.compiler.model.CompilerException;
+import lyc.compiler.model.InvalidIntegerException;
+import lyc.compiler.model.InvalidLengthException;
+import lyc.compiler.model.UnknownCharacterException;
 
 @Disabled
 public class LexerTest {
 
   private Lexer lexer;
-
 
   @Test
   public void comment() throws Exception{
@@ -105,7 +104,7 @@ public class LexerTest {
     return new RandomStringGenerator.Builder()
             .filteredBy(CharacterPredicates.LETTERS)
             .withinRange('a', 'z')
-            .build().generate(MAX_LENGTH * 2);
+            .build().generate(MAX_STRING * 2);
   }
 
 }
