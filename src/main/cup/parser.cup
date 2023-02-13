@@ -4,6 +4,10 @@ import java_cup.runtime.*;
 
 class Parser;
 
+action code {:
+  private boolean debug = true;
+:};
+
 // Terminals
 terminal PLUS;
 terminal SUB;
@@ -34,14 +38,10 @@ terminal FIBONACCI;
 //Other symbols
 terminal OPEN_BRACKET;
 terminal CLOSE_BRACKET;
-terminal OPEN_SQUAREBRACKET;
-terminal CLOSE_SQUAREBRACKET;
 terminal OPEN_CURLYBRACKET;
 terminal CLOSE_CURLYBRACKET;
 terminal COMMA;
-terminal DOT;
 terminal COLON;
-terminal SEMICOLON;
 
 /// Identificadores y Constantes
 terminal IDENTIFIER;
@@ -50,26 +50,106 @@ terminal FLOAT_CONSTANT;
 terminal STRING_CONSTANT;
 
 // Non Terminals
+non terminal startprogram;
+non terminal program;
 non terminal sentence;
 non terminal assignment;
 non terminal expression;
 non terminal term;
 non terminal factor;
+non terminal elementList;
+non terminal condition;
+non terminal conditionConcat;
+non terminal comparitionOperator;
+non terminal declaration;
+non terminal declarationList;
+non terminal type;
+non terminal input;
+non terminal output;
+non terminal iteration;
+non terminal selection;
+non terminal conditionTerm;
+non terminal variableList;
+non terminal variable;
+non terminal declarationBlock;
 
 // Start Symbol Definition
-start with sentence;
+start with startprogram;
 
-sentence ::= assignment {: System.out.println("End"); :};
-assignment ::= IDENTIFIER ASSIG expression {: System.out.println("Assignment"); :};
-expression ::= expression PLUS term {: System.out.println("+"); :};
-expression ::= expression SUB term {: System.out.println("-"); :};
-expression ::= term {: System.out.println("Expression = Term"); :};
-term ::= term MULT factor {: System.out.println("*"); :};
-term ::= term DIV factor {: System.out.println("/"); :};
-term ::= factor {: System.out.println("Term = factor"); :};
-factor ::= IDENTIFIER:id  {: System.out.println("Id: " + id); :};
-factor ::= INTEGER_CONSTANT:constant {: System.out.println("Constant: " + constant ); :};
-factor ::= OPEN_BRACKET expression CLOSE_BRACKET {: System.out.println("Factor = (Expression)"); :};
+//Base
+startprogram ::=;
+startprogram ::= program;
+program ::= sentence {: if(debug) { System.out.println("Program"); } :};
+program ::= program sentence {: if(debug) { System.out.println("Program"); }:};
+sentence ::= assignment {: if(debug) { System.out.println("End"); } :};
+assignment ::= IDENTIFIER ASSIG expression {: if(debug) { System.out.println("Assignment"); } :};
+assignment ::= IDENTIFIER ASSIG STRING_CONSTANT {: if(debug) { System.out.println("Assignment of string"); } :};
 
 
+//Sentences
+sentence ::= input {: if(debug) { System.out.println("Input"); } :};
+sentence ::= output {: if(debug) { System.out.println("Output"); } :};
+sentence ::= iteration {: if(debug) { System.out.println("Iteration"); } :};
+sentence ::= selection {: if(debug) { System.out.println("Selection"); } :};
+sentence ::= declarationBlock {: if(debug) { System.out.println("DeclarationBlock"); } :};
 
+//Iteration
+iteration ::= WHILE OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET CLOSE_CURLYBRACKET {: if(debug) { System.out.println("Empty iteration"); } :};
+iteration ::= WHILE OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET {: if(debug) { System.out.println("Iteration"); } :};
+
+//Selection
+selection ::= IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET CLOSE_CURLYBRACKET {: if(debug) { System.out.println("Empty selection"); } :};
+selection ::= IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET {: if(debug) { System.out.println("Selection"); } :};
+selection ::= IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET ELSE OPEN_CURLYBRACKET CLOSE_CURLYBRACKET {: if(debug) { System.out.println("Selection with empty else"); } :};
+selection ::= IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET ELSE OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET {: if(debug) { System.out.println("Selection with else"); } :};
+
+condition ::= conditionTerm conditionConcat conditionTerm {: if(debug) { System.out.println("conditionTerm concat conditionTerm"); } :};
+condition ::= conditionTerm {: if(debug) { System.out.println("conditionTerm"); } :};
+
+conditionTerm ::= expression comparitionOperator expression {: if(debug) { System.out.println("Condition"); } :};
+conditionTerm ::= NOT expression comparitionOperator expression {: if(debug) { System.out.println("Condition"); } :};
+
+conditionConcat ::= OR {: if(debug) { System.out.println("||"); } :};
+conditionConcat ::= AND {: if(debug) { System.out.println("&&"); } :};
+
+comparitionOperator ::= GREATER {: if(debug) { System.out.println(">"); } :};
+comparitionOperator ::= LESS {: if(debug) { System.out.println("<"); } :};
+
+//Declaration
+declarationBlock ::= INIT OPEN_CURLYBRACKET declarationList CLOSE_CURLYBRACKET {: if(debug) { System.out.println("Init"); } :};
+declarationList ::= declaration {: if(debug) { System.out.println("Declaration"); } :};
+declarationList ::= declarationList declaration {: if(debug) { System.out.println("Declaration"); } :};
+declaration ::= variableList COLON type {: if(debug) { System.out.println("Declaration"); } :};
+variableList ::= variable {: if(debug) { System.out.println("Declaration list"); } :};
+variableList ::= variableList COMMA variable {: if(debug) { System.out.println("Declaration list"); } :};
+variable::= IDENTIFIER {: if(debug) { System.out.println("Variable"); } :};
+type ::= INTEGERTYPE {: if(debug) { System.out.println("Int"); } :};
+type ::= FLOATTYPE {: if(debug) { System.out.println("Float"); } :};
+type ::= STRINGTYPE {: if(debug) { System.out.println("String"); } :};
+
+//Expressions
+expression ::= expression PLUS term {: if(debug) { System.out.println("+"); } :};
+expression ::= expression SUB term {: if(debug) { System.out.println("-"); } :};
+expression ::= term {: if(debug) { System.out.println("Expression = Term"); } :};
+
+term ::= term MULT factor {: if(debug) { System.out.println("*"); } :};
+term ::= term DIV factor {: if(debug) { System.out.println("/"); } :};
+term ::= factor {: if(debug) { System.out.println("Term = factor"); } :};
+
+factor ::= IDENTIFIER:id  {: if(debug) { System.out.println("Id: " + id); } :};
+factor ::= INTEGER_CONSTANT:constant {: if(debug) { System.out.println("Int Constant: " + constant ); } :};
+factor ::= FLOAT_CONSTANT:constant {: if(debug) { System.out.println("Float Constant: " + constant ); } :};
+factor ::= OPEN_BRACKET expression CLOSE_BRACKET {: if(debug) { System.out.println("Factor = (Expression)"); } :};
+
+//I/O
+input ::= READ OPEN_BRACKET IDENTIFIER CLOSE_BRACKET {: if(debug) { System.out.println("Input"); } :};
+output ::= WRITE OPEN_BRACKET STRING_CONSTANT CLOSE_BRACKET {: if(debug) { System.out.println("Output"); } :};
+output ::= WRITE OPEN_BRACKET IDENTIFIER CLOSE_BRACKET {: if(debug) { System.out.println("Output"); } :};
+
+//Temas Especiales
+//FIB
+factor ::= FIBONACCI OPEN_BRACKET factor CLOSE_BRACKET {: if(debug) { System.out.println("Fibonacci"); } :};
+//ElementInTheMiddle
+factor ::= ELEMENTINTHEMIDDLE OPEN_BRACKET elementList CLOSE_BRACKET {: if(debug) { System.out.println("ElementInTheMiddle"); } :};
+elementList ::= elementList COMMA factor COMMA factor {: if(debug) { System.out.println("Element list - Odd elements"); } :}; 
+elementList ::= factor {: if(debug) { System.out.println("Element list - Only one"); } :}; 
