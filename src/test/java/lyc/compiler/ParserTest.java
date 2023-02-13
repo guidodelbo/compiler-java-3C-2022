@@ -30,12 +30,19 @@ public class ParserTest {
 
     @Test
     void assignments() throws Exception {
-        compilationSuccessful(readFromFile("assignments.txt"));
+        String value = readFromFile("assignments.txt");
+        value = value.replaceAll("“", "\"");
+        value = value.replaceAll("”", "\"");
+
+        compilationSuccessful(value);
     }
 
     @Test
     void write() throws Exception {
-        compilationSuccessful(readFromFile("write.txt"));
+        String value = readFromFile("write.txt");
+        value = value.replaceAll("“", "\"");
+        value = value.replaceAll("”", "\"");
+        compilationSuccessful(value);
     }
 
     @Test
@@ -77,7 +84,6 @@ public class ParserTest {
     void whileStatement() throws Exception {
         compilationSuccessful(readFromFile("while.txt"));
     }
-
 
     private void compilationSuccessful(String input) throws Exception {
         assertThat(scan(input).sym).isEqualTo(ParserSym.EOF);

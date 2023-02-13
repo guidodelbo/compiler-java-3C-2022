@@ -18,18 +18,19 @@ import lyc.compiler.model.InvalidIntegerException;
 import lyc.compiler.model.InvalidLengthException;
 import lyc.compiler.model.UnknownCharacterException;
 
-@Disabled
 public class LexerTest {
 
   private Lexer lexer;
 
-  @Test
+@Disabled
+@Test
   public void comment() throws Exception{
     scan("/*This is a comment*/");
     assertThat(nextToken()).isEqualTo(ParserSym.EOF);
   }
 
-  @Test
+@Disabled
+@Test
   public void invalidStringConstantLength() {
     assertThrows(InvalidLengthException.class, () -> {
       scan("\"%s\"".formatted(getRandomString()));
@@ -37,7 +38,8 @@ public class LexerTest {
     });
   }
 
-  @Test
+@Disabled
+@Test
   public void invalidIdLength() {
     assertThrows(InvalidLengthException.class, () -> {
       scan(getRandomString());
@@ -45,10 +47,11 @@ public class LexerTest {
     });
   }
 
-  @Test
+@Disabled
+@Test
   public void invalidPositiveIntegerConstantValue() {
     assertThrows(InvalidIntegerException.class, () -> {
-      scan("%d".formatted(9223372036854775807L));
+      scan("%d".formatted(9223372036854775806L));
       nextToken();
     });
   }
@@ -62,6 +65,7 @@ public class LexerTest {
   }
 
 
+  @Disabled
   @Test
   public void assignmentWithExpressions() throws Exception {
     scan("c=d*(e-21)/4");

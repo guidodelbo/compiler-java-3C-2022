@@ -21,7 +21,7 @@ import lyc.compiler.files.SymbolTableGenerator;
 
 
 %{
-  private boolean debug = false;
+  private boolean debug = true;
 
   private Symbol symbol(int type) {
     return new Symbol(type, yyline, yycolumn);
@@ -65,14 +65,11 @@ Assig = "="
 //Other symbols
 BracketOpen = "("
 BracketClose = ")"
-SquareBracketOpen = "["
-SquareBracketClose = "]"
 CurlyBracketOpen = "{"
 CurlyBracketClose = "}"
 Comma = ","
 Dot = "."
 Colon = ":"
-Semicolon = ";"
 
 Letter = [a-zA-Z]
 Digit = [0-9]
@@ -86,9 +83,8 @@ WhiteSpace = {LineTerminator} | {Identation}
 //Identificadores y Constantes
 Identifier = {Letter} ({Letter}|{Digit})*
 IntegerConstant = {Digit}+
-FloatConstant = {Digit}+ {Dot} {Digit}+ | {Digit}+ {Dot} | {Dot} {Digit}+
-StringConstant = {Quote} {InputCharacter}* {Quote}
-Quote = \"
+FloatConstant = ({Digit}+ {Dot} {Digit}+ | {Digit}+ {Dot} | {Dot} {Digit}+)
+StringConstant = \"[^\n\"]*\"
 
 %%
 
@@ -126,14 +122,10 @@ Quote = \"
   /// Simbolos
   {BracketOpen}                             { if(debug){  System.out.println("OPEN_BRACKET");         } return symbol(ParserSym.OPEN_BRACKET); }
   {BracketClose}                            { if(debug){  System.out.println("CLOSE_BRACKET");        } return symbol(ParserSym.CLOSE_BRACKET); }
-  {SquareBracketOpen}                       { if(debug){  System.out.println("OPEN_SQUAREBRACKET");   } return symbol(ParserSym.OPEN_SQUAREBRACKET); }
-  {SquareBracketClose}                      { if(debug){  System.out.println("CLOSE_SQUAREBRACKET");  } return symbol(ParserSym.CLOSE_SQUAREBRACKET); }
   {CurlyBracketOpen}                        { if(debug){  System.out.println("OPEN_CURLYBRACKET");    } return symbol(ParserSym.OPEN_CURLYBRACKET); }
   {CurlyBracketClose}                       { if(debug){  System.out.println("CLOSE_CURLYBRACKET");   } return symbol(ParserSym.CLOSE_CURLYBRACKET); }
   {Comma}                                   { if(debug){  System.out.println("COMMA");                } return symbol(ParserSym.COMMA); }
-  {Dot}                                     { if(debug){  System.out.println("DOT");                  } return symbol(ParserSym.DOT); }
   {Colon}                                   { if(debug){  System.out.println("COLON");                } return symbol(ParserSym.COLON); }
-  {Semicolon}                               { if(debug){  System.out.println("SEMICOLON");            } return symbol(ParserSym.SEMICOLON); }
 
   /// Identificadores y Constantes
   {Identifier}                              { 

@@ -3,12 +3,15 @@
 ## Prerequisitos.
 
 Para poder usar esta plantilla deberá instalar:
+
 1.  [JDK 18](https://www.oracle.com/java/technologies/javase/jdk18-archive-downloads.html)
 
 ### Instalación en Windows
+
 1. Bajarse [Windows x64 Installer](https://www.oracle.com/java/technologies/javase/jdk18-archive-downloads.html)
 2. Setear JAVA_HOME como variable de entorno en variables del sistema ([Instructivo](https://docs.oracle.com/cd/E19182-01/821-0917/inst_jdk_javahome_t/index.html#:~:text=To%20set%20JAVA_HOME%2C%20do%20the,Program%20Files%5CJava%5Cjdk1.))
 3. Corroborar que JAVA_HOME fue seteado correctamente abriendo la terminal de símbolos del sistema (command prompt) ejecuntando el siguiente comando:
+
 ```
 echo %JAVA_HOME%
 ```
@@ -24,12 +27,13 @@ Toda la documentación referente a ambas herramientas la encontrará en las pág
 Abrir una terminal en el directorio raíz del proyecto y correr el siguiente comando:
 
 Para Linux/Mac:
+
 ```
 ./mvnw clean install
 ```
 
-
 Para Windows:
+
 ```
 ./mvnw.cmd clean install
 ```
@@ -41,12 +45,13 @@ El mismo generará los ejecutables y correrá los tests.
 Abrir una terminal en el directorio raíz del proyecto y correr el siguiente comando:
 
 Para Linux/Mac:
+
 ```
 ./mvnw clean install -Drun-compiler
 ```
 
-
 Para Windows:
+
 ```
 ./mvnw.cmd clean install -Drun-compiler
 ```
@@ -80,6 +85,7 @@ En la plantilla ya están incluídos dos casos de prueba automatizados y listos 
 - ParserTest (Analizador Sintáctico)
 
 A tener en cuenta:
+
 1. Los Tests vienen deshabilitados por defecto ya que las funcionalidades que son probadas no están implementadas aún.
 2. Al tope de la clase está presente la annotation [@Disabled](https://howtodoinjava.com/junit5/junit-5-disabled-test-example/) para dicho propósito
 3. Cada grupo podrá ir habilitando los tests a medida que vayan implementado las funcionalidades.
