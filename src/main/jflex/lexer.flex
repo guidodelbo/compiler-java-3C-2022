@@ -21,7 +21,7 @@ import lyc.compiler.files.SymbolTableGenerator;
 
 
 %{
-  private boolean debug = true;
+  private boolean debug = false;
 
   private Symbol symbol(int type) {
     return new Symbol(type, yyline, yycolumn);

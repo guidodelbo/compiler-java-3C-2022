@@ -5,7 +5,7 @@ import java_cup.runtime.*;
 class Parser;
 
 action code {:
-  private boolean debug = true;
+  private boolean debug = false;
 :};
 
 // Terminals
