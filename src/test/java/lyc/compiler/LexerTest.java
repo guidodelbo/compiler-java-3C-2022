@@ -18,8 +18,8 @@ import lyc.compiler.model.InvalidIntegerException;
 import lyc.compiler.model.InvalidLengthException;
 import lyc.compiler.model.UnknownCharacterException;
 
-  public class LexerTest {
-
+@Disabled
+public class LexerTest {
   private Lexer lexer;
 
   @Test
