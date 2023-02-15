@@ -18,7 +18,7 @@ import lyc.compiler.model.InvalidIntegerException;
 import lyc.compiler.model.InvalidLengthException;
 import lyc.compiler.model.UnknownCharacterException;
 
-public class LexerTest {
+  public class LexerTest {
 
   private Lexer lexer;
 
@@ -52,7 +52,6 @@ public class LexerTest {
     });
   }
 
-  @Disabled
   @Test
   public void invalidNegativeIntegerConstantValue() {
     assertThrows(InvalidIntegerException.class, () -> {
@@ -61,7 +60,7 @@ public class LexerTest {
     });
   }
 
-
+  @Disabled
   @Test
   public void assignmentWithExpressions() throws Exception {
     scan("c=d*(e-21)/4");

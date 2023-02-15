@@ -21,7 +21,7 @@ import lyc.compiler.files.SymbolTableGenerator;
 
 
 %{
-  private boolean debug = false;
+  private boolean debug = true;
 
   private Symbol symbol(int type) {
     return new Symbol(type, yyline, yycolumn);
@@ -30,10 +30,6 @@ import lyc.compiler.files.SymbolTableGenerator;
     return new Symbol(type, yyline, yycolumn, value);
   }
 %}
-
-LineTerminator = \r|\n|\r\n
-InputCharacter = [^\r\n]
-Identation =  [ \t\f]
 
 //Reserved words 
 If = "if"
@@ -78,13 +74,16 @@ StartComment = "/*"
 EndComment = "*/"
 Comment = {StartComment} {InputCharacter}* {EndComment}
 
-WhiteSpace = {LineTerminator} | {Identation}
-
 //Identificadores y Constantes
 Identifier = {Letter} ({Letter}|{Digit})*
-IntegerConstant = {Digit}+
+IntegerConstant = {Sub}?{Digit}+
 FloatConstant = ({Digit}+ {Dot} {Digit}+ | {Digit}+ {Dot} | {Dot} {Digit}+)
 StringConstant = \"[^\n\"]*\"
+
+LineTerminator = \r|\n|\r\n
+InputCharacter = [^\r\n]
+Identation =  [ \t\f]
+WhiteSpace = {LineTerminator} | {Identation}
 
 %%
 
