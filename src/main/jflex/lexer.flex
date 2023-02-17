@@ -21,7 +21,7 @@ import lyc.compiler.files.SymbolTableGenerator;
 
 
 %{
-  private boolean debug = true;
+  private boolean debug = false;
 
   private Symbol symbol(int type) {
     return new Symbol(type, yyline, yycolumn);
@@ -77,7 +77,7 @@ Comment = {StartComment} {InputCharacter}* {EndComment}
 //Identificadores y Constantes
 Identifier = {Letter} ({Letter}|{Digit})*
 IntegerConstant = {Sub}?{Digit}+
-FloatConstant = ({Digit}+ {Dot} {Digit}+ | {Digit}+ {Dot} | {Dot} {Digit}+)
+FloatConstant = {Sub}?({Digit}+ {Dot} {Digit}+ | {Digit}+ {Dot} | {Dot} {Digit}+)
 StringConstant = \"[^\n\"]*\"
 
 LineTerminator = \r|\n|\r\n
