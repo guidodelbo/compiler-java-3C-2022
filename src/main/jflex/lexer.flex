@@ -155,7 +155,7 @@ WhiteSpace = {LineTerminator} | {Identation}
                                                                                 );
                                               }
 
-                                              SymbolTableGenerator.addSymbol("_" + yytext(), SymbolTableGenerator.Type.INT, yytext());
+                                              SymbolTableGenerator.addSymbol("_" + yytext(), SymbolTableGenerator.Type.CTE_INT, yytext());
                                               
                                               return symbol(ParserSym.INTEGER_CONSTANT, yytext()); 
                                             }
@@ -172,7 +172,7 @@ WhiteSpace = {LineTerminator} | {Identation}
                                                                   );
                                               }
 
-                                              SymbolTableGenerator.addSymbol("_" + yytext(), SymbolTableGenerator.Type.FLOAT, yytext());
+                                              SymbolTableGenerator.addSymbol("_" + yytext(), SymbolTableGenerator.Type.CTE_FLOAT, yytext());
                                               return symbol(ParserSym.FLOAT_CONSTANT, yytext()); 
                                             }
 
@@ -188,7 +188,7 @@ WhiteSpace = {LineTerminator} | {Identation}
                                                                                 );
                                               }
 
-                                              SymbolTableGenerator.addSymbol("_" + yytext(),SymbolTableGenerator.Type.STRING, yytext());
+                                              SymbolTableGenerator.addSymbol("_" + yytext(),SymbolTableGenerator.Type.CTE_STRING, yytext());
                                               return symbol(ParserSym.STRING_CONSTANT, yytext()); 
                                             }
                 
