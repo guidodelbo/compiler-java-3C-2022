@@ -1,7 +1,5 @@
 if (a > b) { a = 10 } else { } 
 
-result = 999
-
 if (a > b) { a = 3 } else { b = 5 } 
 
 result = 888
