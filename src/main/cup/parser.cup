@@ -1,11 +1,46 @@
 package lyc.compiler;
 
 import java_cup.runtime.*;
+import lyc.compiler.files.IntermediateCodeGenerator;
 
 class Parser;
 
 action code {:
   private boolean debug = false;
+
+  private int FactorIndex = 0;
+  private int TermIndex = 0;
+  private int ExpressionIndex = 0;
+  private int ConditionIndex = 0;
+  private int ConditionTermIndex = 0;
+  private int ConditionConcatIndex = 0;
+  private int ComparitionOperatorIndex = 0;
+  private int AssignmentIndex = 0;
+  private int InputIndex = 0;
+  private int OutputIndex = 0;
+  private int IterationIndex = 0;
+  private int SelectionIndex = 0;
+  private int DeclarationIndex = 0;
+  private int DeclarationListIndex = 0;
+  private int VariableListIndex = 0;
+  private int VariableIndex = 0;
+  private int TypeIndex = 0;
+  private int ElementListIndex = 0;
+  private int ElementInTheMiddleIndex = 0;
+  private int FibonacciIndex = 0;
+  private int SentenceIndex = 0;
+  private int ProgramIndex = 0;
+  private int StartProgramIndex = 0;
+  private int DeclarationBlockIndex = 0;
+  private int LeftExpressionIndex = 0;
+  private int RightExpressionIndex = 0;
+
+  private String LogicOperator = "";
+  private String CompOperator = "";
+  private String OppositeCompOperator = "";
+  private int ComparetorIndex = 0;
+  private int CurrentTriple = 0;
+
 :};
 
 // Terminals
@@ -74,12 +109,13 @@ non terminal variable;
 non terminal declarationBlock;
 
 // Start Symbol Definition
+// Use IntermediateCodeGenerator.java to generate the Intermediate Code using triplets
 start with startprogram;
 
 //Base
 startprogram ::=;
 startprogram ::= program;
-program ::= sentence {: if(debug) { System.out.println("Program"); } :};
+program ::= sentence {:  if(debug) { System.out.println("Program"); } :};
 program ::= program sentence {: if(debug) { System.out.println("Program"); }:};
 sentence ::= assignment {: if(debug) { System.out.println("End"); } :};
 assignment ::= IDENTIFIER ASSIG expression {: if(debug) { System.out.println("Assignment"); } :};
@@ -98,22 +134,76 @@ iteration ::= WHILE OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET CLOSE
 iteration ::= WHILE OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET {: if(debug) { System.out.println("Iteration"); } :};
 
 //Selection
-selection ::= IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET CLOSE_CURLYBRACKET {: if(debug) { System.out.println("Empty selection"); } :};
-selection ::= IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET {: if(debug) { System.out.println("Selection"); } :};
-selection ::= IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET ELSE OPEN_CURLYBRACKET CLOSE_CURLYBRACKET {: if(debug) { System.out.println("Selection with empty else"); } :};
-selection ::= IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET ELSE OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET {: if(debug) { System.out.println("Selection with else"); } :};
+selection ::= IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET CLOSE_CURLYBRACKET 
+                            {: if(debug) { System.out.println("Empty selection"); } 
+                            
+                                CurrentTriple = IntermediateCodeGenerator.getTripleCount();
+
+                                IntermediateCodeGenerator.updateTriple(ComparetorIndex, "[" + CurrentTriple + "]");
+                            :};
+
+selection ::= IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET 
+                            {: 
+                                if(debug) { System.out.println("Selection"); } 
+                                
+                                CurrentTriple = IntermediateCodeGenerator.getTripleCount();
+
+                                IntermediateCodeGenerator.updateTriple(ComparetorIndex, "[" + CurrentTriple + "]");
+                            :};
+
+selection ::= IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET ELSE OPEN_CURLYBRACKET CLOSE_CURLYBRACKET 
+                            {:  
+                                if(debug) { System.out.println("Selection with empty else"); } 
+                            
+                                CurrentTriple = IntermediateCodeGenerator.getTripleCount();
+
+                                IntermediateCodeGenerator.updateTriple(ComparetorIndex, "[" + CurrentTriple + "]");
+                            :};
+
+selection ::=   IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET ELSE OPEN_CURLYBRACKET 
+                            {:  
+                                if(debug) { System.out.println("Selection with else"); } 
+                            
+                                CurrentTriple = IntermediateCodeGenerator.getTripleCount();
+
+                                IntermediateCodeGenerator.updateTriple(ComparetorIndex, "[" + CurrentTriple + "]");
+                            :}
+                            
+                            program CLOSE_CURLYBRACKET;
 
 condition ::= conditionTerm conditionConcat conditionTerm {: if(debug) { System.out.println("conditionTerm concat conditionTerm"); } :};
 condition ::= conditionTerm {: if(debug) { System.out.println("conditionTerm"); } :};
 
-conditionTerm ::= expression comparitionOperator expression {: if(debug) { System.out.println("Condition"); } :};
-conditionTerm ::= NOT expression comparitionOperator expression {: if(debug) { System.out.println("Condition"); } :};
+conditionTerm ::= expression 
+                            {: LeftExpressionIndex = ExpressionIndex; :}
+                  comparitionOperator 
+                  
+                  expression 
+                            {:  if(debug) { System.out.println("Condition"); } 
+                              
+                                ConditionTermIndex = IntermediateCodeGenerator.addTriple("CMP",  "[" + LeftExpressionIndex + "]",  "[" + ExpressionIndex + "]" );
 
-conditionConcat ::= OR {: if(debug) { System.out.println("||"); } :};
-conditionConcat ::= AND {: if(debug) { System.out.println("&&"); } :};
+                                ComparetorIndex = IntermediateCodeGenerator.addTriple(OppositeCompOperator, "?");
+                            :};
 
-comparitionOperator ::= GREATER {: if(debug) { System.out.println(">"); } :};
-comparitionOperator ::= LESS {: if(debug) { System.out.println("<"); } :};
+conditionTerm ::= NOT expression 
+                            {: LeftExpressionIndex = ExpressionIndex; :}
+                  
+                  comparitionOperator 
+                  
+                  expression 
+                            {: if(debug) { System.out.println("Condition"); } 
+
+                                ConditionTermIndex = IntermediateCodeGenerator.addTriple("CMP",  "[" + LeftExpressionIndex + "]",  "[" + ExpressionIndex + "]" );
+
+                                IntermediateCodeGenerator.addTriple(CompOperator, "?");
+                            :};
+
+conditionConcat ::= OR {: if(debug) { System.out.println("||"); } LogicOperator = "OR"; :};
+conditionConcat ::= AND {: if(debug) { System.out.println("&&"); } LogicOperator = "AND"; :};
+
+comparitionOperator ::= GREATER {: if(debug) { System.out.println(">"); } CompOperator = "BGT"; OppositeCompOperator = "BLE"; :};
+comparitionOperator ::= LESS {: if(debug) { System.out.println("<"); } CompOperator = "BLT"; OppositeCompOperator = "BGE"; :};
 
 //Declaration
 declarationBlock ::= INIT OPEN_CURLYBRACKET declarationList CLOSE_CURLYBRACKET {: if(debug) { System.out.println("Init"); } :};
@@ -127,19 +217,21 @@ type ::= INTEGERTYPE {: if(debug) { System.out.println("Int"); } :};
 type ::= FLOATTYPE {: if(debug) { System.out.println("Float"); } :};
 type ::= STRINGTYPE {: if(debug) { System.out.println("String"); } :};
 
-//Expressions
-expression ::= expression PLUS term {: if(debug) { System.out.println("+"); } :};
-expression ::= expression SUB term {: if(debug) { System.out.println("-"); } :};
-expression ::= term {: if(debug) { System.out.println("Expression = Term"); } :};
+//Expressions GCI OK
+expression ::= expression PLUS term {: if(debug) { System.out.println("+"); } ExpressionIndex = IntermediateCodeGenerator.addTriple("+", "[" + ExpressionIndex + "]", "[" +TermIndex + "]"); :};
+expression ::= expression SUB term {: if(debug) { System.out.println("-"); } ExpressionIndex = IntermediateCodeGenerator.addTriple("-", "[" + ExpressionIndex + "]", "[" +TermIndex + "]"); :};
+expression ::= term {: if(debug) { System.out.println("Expression = Term"); } ExpressionIndex = TermIndex; :};
 
-term ::= term MULT factor {: if(debug) { System.out.println("*"); } :};
-term ::= term DIV factor {: if(debug) { System.out.println("/"); } :};
-term ::= factor {: if(debug) { System.out.println("Term = factor"); } :};
+//Terms GCI OK
+term ::= term MULT factor {: if(debug) { System.out.println("*"); } TermIndex = IntermediateCodeGenerator.addTriple("*", "[" + TermIndex + "]", "[" +FactorIndex + "]"); :};
+term ::= term DIV factor {: if(debug) { System.out.println("/"); } TermIndex = IntermediateCodeGenerator.addTriple("/", "[" + TermIndex + "]", "[" +FactorIndex + "]"); :};
+term ::= factor {: if(debug) { System.out.println("Term = factor"); } TermIndex = FactorIndex; :};
 
-factor ::= IDENTIFIER:id  {: if(debug) { System.out.println("Id: " + id); } :};
-factor ::= INTEGER_CONSTANT:constant {: if(debug) { System.out.println("Int Constant: " + constant ); } :};
-factor ::= FLOAT_CONSTANT:constant {: if(debug) { System.out.println("Float Constant: " + constant ); } :};
-factor ::= OPEN_BRACKET expression CLOSE_BRACKET {: if(debug) { System.out.println("Factor = (Expression)"); } :};
+//Factor GCI OK
+factor ::= OPEN_BRACKET expression CLOSE_BRACKET {: if(debug) { System.out.println("Factor = (Expression)"); } FactorIndex = ExpressionIndex; :};
+factor ::= IDENTIFIER:id  {: if(debug) { System.out.println("Id: " + id); } FactorIndex = IntermediateCodeGenerator.addTriple(id); :};
+factor ::= INTEGER_CONSTANT:constant {: if(debug) { System.out.println("Int Constant: " + constant ); } FactorIndex = IntermediateCodeGenerator.addTriple(constant); :};
+factor ::= FLOAT_CONSTANT:constant {: if(debug) { System.out.println("Float Constant: " + constant ); } FactorIndex = IntermediateCodeGenerator.addTriple(constant); :};
 
 //I/O
 input ::= READ OPEN_BRACKET IDENTIFIER CLOSE_BRACKET {: if(debug) { System.out.println("Input"); } :};
