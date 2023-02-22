@@ -1,5 +1,8 @@
-if (a > b) { a = 10 } else { } 
-
-if (a > b) { a = 3 } else { b = 5 } 
-
-result = 888
+init { 
+    a1, b1 : Float 
+    a, b, c, d, e, f, g, i, j, h, k, l, n, m, o, q, r, s, t, u, v, p, w, x, y, z, variable1, variable2, id : Int 
+    j1, j2, j3 : String 
+    p1, p2, p3, numvar, var1, var2 : String 
+    /* redeclaro variables */ 
+    /* a1, b1 : String */ 
+} 

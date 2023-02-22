@@ -34,6 +34,9 @@ action code {:
   private int DeclarationBlockIndex = 0;
   private int LeftExpressionIndex = 0;
   private int RightExpressionIndex = 0;
+  private int FirstVariableIndex = 0;
+  private int VariableCount = 0;
+
 
   private String LogicOperator = "";
   private String CompOperator = "";
@@ -112,7 +115,7 @@ non terminal declarationBlock;
 // Use IntermediateCodeGenerator.java to generate the Intermediate Code using triplets
 start with startprogram;
 
-//Base GCI PENDING
+//Base GCI PENDING?
 startprogram ::=;
 startprogram ::= program;
 program ::= sentence {:  if(debug) { System.out.println("Program"); } :};
@@ -124,14 +127,14 @@ sentence ::= assignment {: if(debug) { System.out.println("End"); } :};
 assignment ::= IDENTIFIER:id ASSIG expression {: if(debug) { System.out.println("Assignment:" + id); } IntermediateCodeGenerator.addTriple("=", id, "[" + ExpressionIndex + "]"); :};
 assignment ::= IDENTIFIER:id ASSIG STRING_CONSTANT:constant {: if(debug) { System.out.println("Assignment of string:" + id); } IntermediateCodeGenerator.addTriple("=", id, constant); :};
 
-//Sentences GCI PENDING
+//Sentences GCI PENDING?
 sentence ::= input {: if(debug) { System.out.println("Input"); } :};
 sentence ::= output {: if(debug) { System.out.println("Output"); } :};
 sentence ::= iteration {: if(debug) { System.out.println("Iteration"); } :};
 sentence ::= selection {: if(debug) { System.out.println("Selection"); } :};
 sentence ::= declarationBlock {: if(debug) { System.out.println("DeclarationBlock"); } :};
 
-//Iteration  GCI PENDING
+//Iteration  GCI PENDING?
 iteration ::= WHILE OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET CLOSE_CURLYBRACKET {: if(debug) { System.out.println("Empty iteration"); } :};
 iteration ::= WHILE OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET {: if(debug) { System.out.println("Iteration"); } :};
 
@@ -173,6 +176,7 @@ selection ::=   IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET progra
                             
                             program CLOSE_CURLYBRACKET;
 
+//Multiple Condition GCI PENDING
 condition ::= conditionTerm conditionConcat conditionTerm {: if(debug) { System.out.println("conditionTerm concat conditionTerm"); } :};
 condition ::= conditionTerm {: if(debug) { System.out.println("conditionTerm"); } :};
 
@@ -207,17 +211,42 @@ conditionConcat ::= AND {: if(debug) { System.out.println("&&"); } LogicOperator
 comparitionOperator ::= GREATER {: if(debug) { System.out.println(">"); } CompOperator = "BGT"; OppositeCompOperator = "BLE"; :};
 comparitionOperator ::= LESS {: if(debug) { System.out.println("<"); } CompOperator = "BLT"; OppositeCompOperator = "BGE"; :};
 
-//Declaration GCI PENDING
+//Declaration GCI OK
 declarationBlock ::= INIT OPEN_CURLYBRACKET declarationList CLOSE_CURLYBRACKET {: if(debug) { System.out.println("Init"); } :};
 declarationList ::= declaration {: if(debug) { System.out.println("Declaration"); } :};
 declarationList ::= declarationList declaration {: if(debug) { System.out.println("Declaration"); } :};
-declaration ::= variableList COLON type {: if(debug) { System.out.println("Declaration"); } :};
-variableList ::= variable {: if(debug) { System.out.println("Declaration list"); } :};
-variableList ::= variableList COMMA variable {: if(debug) { System.out.println("Declaration list"); } :};
-variable::= IDENTIFIER {: if(debug) { System.out.println("Variable"); } :};
-type ::= INTEGERTYPE {: if(debug) { System.out.println("Int"); } :};
-type ::= FLOATTYPE {: if(debug) { System.out.println("Float"); } :};
-type ::= STRINGTYPE {: if(debug) { System.out.println("String"); } :};
+declaration ::= variableList COLON type 
+                            {: if(debug) { System.out.println("Declaration"); } 
+
+                                while(VariableCount > 0)
+                                {
+                                    IntermediateCodeGenerator.addTriple("declare", "[" + FirstVariableIndex  + "]", "[" + TypeIndex + "]");
+                                    FirstVariableIndex++;
+                                    VariableCount--;
+                                }
+                            :};
+
+variableList ::= variable   {: 
+                                if(debug) { System.out.println("Variable"); } 
+                                VariableCount = 1;
+                                FirstVariableIndex = VariableIndex;
+                            :};
+variableList ::= variableList COMMA variable 
+                            {: 
+                                if(debug) { System.out.println("Variable list"); } 
+                                VariableCount++;
+                            :};
+
+variable::= IDENTIFIER:id 
+                            {: 
+                                if(debug) { System.out.println("Variable"); } 
+                                VariableIndex = IntermediateCodeGenerator.addTriple(id);
+                            :};
+
+//Type GCI OK
+type ::= INTEGERTYPE {: if(debug) { System.out.println("Int"); } TypeIndex = IntermediateCodeGenerator.addTriple("int"); :};
+type ::= FLOATTYPE {: if(debug) { System.out.println("Float"); } TypeIndex = IntermediateCodeGenerator.addTriple("float"); :};
+type ::= STRINGTYPE {: if(debug) { System.out.println("String"); } TypeIndex = IntermediateCodeGenerator.addTriple("string"); :};
 
 //Expressions GCI OK
 expression ::= expression PLUS term {: if(debug) { System.out.println("+"); } ExpressionIndex = IntermediateCodeGenerator.addTriple("+", "[" + ExpressionIndex + "]", "[" +TermIndex + "]"); :};
