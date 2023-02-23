@@ -35,13 +35,13 @@ action code {:
   private int LeftExpressionIndex = 0;
   private int RightExpressionIndex = 0;
   private int FirstVariableIndex = 0;
-  private int VariableCount = 0;
-
+  private int VariableCount = 0; 
+  private int BranchIndex = 0;
 
   private String LogicOperator = "";
   private String CompOperator = "";
   private String OppositeCompOperator = "";
-  private int ComparetorIndex = 0;
+  private int ComparatorIndex = 0;
   private int CurrentTriple = 0;
 
 :};
@@ -115,7 +115,7 @@ non terminal declarationBlock;
 // Use IntermediateCodeGenerator.java to generate the Intermediate Code using triplets
 start with startprogram;
 
-//Base GCI PENDING?
+//Base GCI OK
 startprogram ::=;
 startprogram ::= program;
 program ::= sentence {:  if(debug) { System.out.println("Program"); } :};
@@ -127,16 +127,34 @@ sentence ::= assignment {: if(debug) { System.out.println("End"); } :};
 assignment ::= IDENTIFIER:id ASSIG expression {: if(debug) { System.out.println("Assignment:" + id); } IntermediateCodeGenerator.addTriple("=", id, "[" + ExpressionIndex + "]"); :};
 assignment ::= IDENTIFIER:id ASSIG STRING_CONSTANT:constant {: if(debug) { System.out.println("Assignment of string:" + id); } IntermediateCodeGenerator.addTriple("=", id, constant); :};
 
-//Sentences GCI PENDING?
+//Sentences GCI OK
 sentence ::= input {: if(debug) { System.out.println("Input"); } :};
 sentence ::= output {: if(debug) { System.out.println("Output"); } :};
 sentence ::= iteration {: if(debug) { System.out.println("Iteration"); } :};
 sentence ::= selection {: if(debug) { System.out.println("Selection"); } :};
 sentence ::= declarationBlock {: if(debug) { System.out.println("DeclarationBlock"); } :};
 
-//Iteration  GCI PENDING?
-iteration ::= WHILE OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET CLOSE_CURLYBRACKET {: if(debug) { System.out.println("Empty iteration"); } :};
-iteration ::= WHILE OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET {: if(debug) { System.out.println("Iteration"); } :};
+//Iteration GCI OK
+iteration ::= WHILE OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET CLOSE_CURLYBRACKET 
+                            {: 
+                                if(debug) { System.out.println("Empty iteration"); } 
+                                
+                                CurrentTriple = IntermediateCodeGenerator.getTripleCount() + 1;
+                                IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
+
+                                ConditionTermIndex = IntermediateCodeGenerator.addTriple("BI",  "[" + LeftExpressionIndex + "]" );
+                            :};
+                            
+iteration ::= WHILE OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET 
+                            {: 
+                                if(debug) { System.out.println("Iteration"); } 
+
+                                CurrentTriple = IntermediateCodeGenerator.getTripleCount() + 1;
+                                IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
+
+                                ConditionTermIndex = IntermediateCodeGenerator.addTriple("BI",  "[" + LeftExpressionIndex + "]" );
+
+                            :};
 
 //Selection GCI OK
 selection ::= IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET CLOSE_CURLYBRACKET 
@@ -144,7 +162,7 @@ selection ::= IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET CLOSE_CU
                             
                                 CurrentTriple = IntermediateCodeGenerator.getTripleCount();
 
-                                IntermediateCodeGenerator.updateTriple(ComparetorIndex, "[" + CurrentTriple + "]");
+                                IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
                             :};
 
 selection ::= IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET 
@@ -153,7 +171,7 @@ selection ::= IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program 
                                 
                                 CurrentTriple = IntermediateCodeGenerator.getTripleCount();
 
-                                IntermediateCodeGenerator.updateTriple(ComparetorIndex, "[" + CurrentTriple + "]");
+                                IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
                             :};
 
 selection ::= IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET ELSE OPEN_CURLYBRACKET CLOSE_CURLYBRACKET 
@@ -162,7 +180,7 @@ selection ::= IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program 
                             
                                 CurrentTriple = IntermediateCodeGenerator.getTripleCount();
 
-                                IntermediateCodeGenerator.updateTriple(ComparetorIndex, "[" + CurrentTriple + "]");
+                                IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
                             :};
 
 selection ::=   IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET ELSE OPEN_CURLYBRACKET 
@@ -171,7 +189,7 @@ selection ::=   IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET progra
                             
                                 CurrentTriple = IntermediateCodeGenerator.getTripleCount();
 
-                                IntermediateCodeGenerator.updateTriple(ComparetorIndex, "[" + CurrentTriple + "]");
+                                IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
                             :}
                             
                             program CLOSE_CURLYBRACKET;
@@ -189,7 +207,7 @@ conditionTerm ::= expression
                               
                                 ConditionTermIndex = IntermediateCodeGenerator.addTriple("CMP",  "[" + LeftExpressionIndex + "]",  "[" + ExpressionIndex + "]" );
 
-                                ComparetorIndex = IntermediateCodeGenerator.addTriple(OppositeCompOperator, "?");
+                                ComparatorIndex = IntermediateCodeGenerator.addTriple(OppositeCompOperator, "?");
                             :};
 
 conditionTerm ::= NOT expression 
@@ -276,3 +294,51 @@ factor ::= FIBONACCI OPEN_BRACKET factor CLOSE_BRACKET {: if(debug) { System.out
 factor ::= ELEMENTINTHEMIDDLE OPEN_BRACKET elementList CLOSE_BRACKET {: if(debug) { System.out.println("ElementInTheMiddle"); } :};
 elementList ::= elementList COMMA factor COMMA factor {: if(debug) { System.out.println("Element list - Odd elements"); } :}; 
 elementList ::= factor {: if(debug) { System.out.println("Element list - Only one"); } :}; 
+
+
+/*
+List<Terce> terces = new ArrayList<>();
+
+  terces.add(new Terce(":=", "0", "", counter.toString()));  // Inicializar el contador en 0
+  terces.add(new Terce(":=", "0", "", temp1.toString()));    // Inicializar el primer término en 0
+  terces.add(new Terce(":=", "1", "", temp2.toString()));    // Inicializar el segundo término en 1
+
+  String label1 = "while_" + terces.size();  // Generar una etiqueta para el inicio del ciclo while
+  terces.add(new Terce("LABEL", "", "", label1));  // Agregar un terceto para la etiqueta
+
+  // Generar un terceto para comparar el contador con el valor de n
+  Terce cmpTerce = new Terce("<=", counter.toString(), Integer.toString(n), "");
+  terces.add(cmpTerce);
+
+  // Generar un terceto de salto condicional para salir del ciclo while si el contador es mayor que n
+  String label2 = "end_while_" + terces.size();
+  Terce jumpTerce = new Terce("JUMP_FALSE", cmpTerce.getResult(), "", label2);
+  terces.add(jumpTerce);
+
+  // Generar un terceto para sumar los dos términos previos de la secuencia
+  terces.add(new Terce("+", temp1.toString(), temp2.toString(), sum.toString()));
+
+  // Generar un terceto para actualizar los dos términos previos de la secuencia
+  terces.add(new Terce(":=", temp2.toString(), "", temp1.toString()));
+  terces.add(new Terce(":=", sum.toString(), "", temp2.toString()));
+
+  // Generar un terceto para incrementar el contador
+  Terce incTerce = new Terce("+=", counter.toString(), "1", "");
+  terces.add(incTerce);
+
+  // Generar un terceto para saltar al inicio del ciclo while
+  terces.add(new Terce("JUMP", "", "", label1));
+
+  String label3 = "end_while_" + terces.size();  // Generar una etiqueta para el final del ciclo while
+  terces.add(new Terce("LABEL", "", "", label3));  // Agregar un terceto para la etiqueta
+
+  // Generar un terceto para asignar el resultado a la variable correspondiente
+  terces.add(new Terce(":=", temp2.toString(), "", result.toString()));
+
+  // Crear una instancia de Expr con el resultado
+  Expr expr = new Expr(result.toString());
+
+  // Crear un nuevo terceto para asignar el resultado a la variable correspondiente
+  Terce assignTerce = new Terce(":=", expr.getValue(), "", "fibonacci_result");
+
+*/
