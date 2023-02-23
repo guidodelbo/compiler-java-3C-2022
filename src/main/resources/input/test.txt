@@ -1,4 +1,7 @@
-while (a < b){
-}
+x = ElementInTheMiddle(este1)
 
-result = 999
+x = ElementInTheMiddle(1, este2, 3)
+
+x = ElementInTheMiddle(a, b, este3, c, d) 
+
+x = ElementInTheMiddle(a, b, c, este4, d, e, f) 

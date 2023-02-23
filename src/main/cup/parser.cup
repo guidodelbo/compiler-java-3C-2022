@@ -37,6 +37,9 @@ action code {:
   private int FirstVariableIndex = 0;
   private int VariableCount = 0; 
   private int BranchIndex = 0;
+  private int ElementListCount = 0;
+  private int MiddleIndex = 0;
+  private int FirstElementIndex = 0;
 
   private String LogicOperator = "";
   private String CompOperator = "";
@@ -144,7 +147,7 @@ iteration ::= WHILE OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET CLOSE
 
                                 ConditionTermIndex = IntermediateCodeGenerator.addTriple("BI",  "[" + LeftExpressionIndex + "]" );
                             :};
-                            
+
 iteration ::= WHILE OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET 
                             {: 
                                 if(debug) { System.out.println("Iteration"); } 
@@ -290,10 +293,28 @@ output ::= WRITE OPEN_BRACKET IDENTIFIER:id CLOSE_BRACKET {: if(debug) { System.
 //Temas Especiales
 //FIB GCI PENDING
 factor ::= FIBONACCI OPEN_BRACKET factor CLOSE_BRACKET {: if(debug) { System.out.println("Fibonacci"); } :};
-//ElementInTheMiddle GCI PENDING
-factor ::= ELEMENTINTHEMIDDLE OPEN_BRACKET elementList CLOSE_BRACKET {: if(debug) { System.out.println("ElementInTheMiddle"); } :};
-elementList ::= elementList COMMA factor COMMA factor {: if(debug) { System.out.println("Element list - Odd elements"); } :}; 
-elementList ::= factor {: if(debug) { System.out.println("Element list - Only one"); } :}; 
+//ElementInTheMiddle GCI OK
+factor ::= ELEMENTINTHEMIDDLE OPEN_BRACKET elementList CLOSE_BRACKET 
+                                    {: 
+                                        if(debug) { System.out.println("ElementInTheMiddle"); } 
+                                        //Find the index of the ElementList in the middle
+                                        int MiddleIndex = FirstElementIndex + ElementListCount / 2;
+                                        FactorIndex = MiddleIndex;
+
+                                    :};
+elementList ::= elementList COMMA factor COMMA factor 
+                                    {: 
+                                        if(debug) { System.out.println("Element list - Odd elements"); } 
+
+                                        ElementListCount = ElementListCount + 2;
+                                    :}; 
+elementList ::= factor {: 
+                            if(debug) { System.out.println("Element list - Only one"); } 
+                            ElementListIndex = FactorIndex; 
+                            FirstElementIndex = FactorIndex;
+                            ElementListCount = 1;
+
+                        :}; 
 
 
 /*
