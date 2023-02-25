@@ -1,7 +1,11 @@
-x = ElementInTheMiddle(este1)
 
-x = ElementInTheMiddle(1, este2, 3)
 
-x = ElementInTheMiddle(a, b, este3, c, d) 
+    while(e > f)
+    {
+        result = 3000
+    }
 
-x = ElementInTheMiddle(a, b, c, este4, d, e, f) 
+
+
+
+

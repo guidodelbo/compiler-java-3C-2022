@@ -75,6 +75,19 @@ public class SymbolTableGenerator implements FileGenerator{
             fileWriter.write(String.format("%-10s %-15s %-50s %-10d%n", symbol.name, symbol.type, value, symbol.longitude));
         }
     }
+
+    //UpdateVariablesType receives a list of variables and updates the value in SymbolTable
+    public static void UpdateVariablesType(List<String> variables, Type type) {
+        for (String variable : variables) {
+            for (Symbol symbol : symbolTable) {
+                if (symbol.name.equals(variable)) {
+                    symbol.type = type;
+                    break;
+                }
+            }
+        }
+    }
+    
 }
     
 

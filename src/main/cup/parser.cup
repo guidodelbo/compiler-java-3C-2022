@@ -1,12 +1,17 @@
 package lyc.compiler;
 
 import java_cup.runtime.*;
+import java.util.ArrayList;
+import java.util.List;
+
 import lyc.compiler.files.IntermediateCodeGenerator;
+import lyc.compiler.files.SymbolTableGenerator;
 
 class Parser;
 
 action code {:
-  private boolean debug = true;
+  private boolean debug = false;
+  private boolean debug2 = true;
 
   private int FactorIndex = 0;
   private int TermIndex = 0;
@@ -40,13 +45,21 @@ action code {:
   private int ElementListCount = 0;
   private int MiddleIndex = 0;
   private int FirstElementIndex = 0;
+  private int TrueConditionIndex = 0;
 
   private String LogicOperator = "";
   private String CompOperator = "";
   private String OppositeCompOperator = "";
   private int ComparatorIndex = 0;
   private int CurrentTriple = 0;
+  private int BIIndex = 0;
 
+  private int ConditionCounter = 0;
+
+  private SymbolTableGenerator.Type VariableType = null;
+
+  private List<String> VariableList = new ArrayList<String>();
+  private List<String> DeclaredVariables = new ArrayList<String>();
 :};
 
 // Terminals
@@ -183,23 +196,72 @@ selection ::= IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program 
                             
                                 CurrentTriple = IntermediateCodeGenerator.getTripleCount();
 
-                                IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
+                                if (ConditionCounter > 0) 
+                                {
+                                    if(debug2) { System.out.println("Pop Value: " + ComparatorIndex); } 
+                                    ComparatorIndex = IntermediateCodeGenerator.stackPop();
+                                    IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
+                                }
                             :};
 
 selection ::=   IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET ELSE OPEN_CURLYBRACKET 
                             {:  
                                 if(debug) { System.out.println("Selection with else"); } 
-                            
+                                
                                 CurrentTriple = IntermediateCodeGenerator.getTripleCount();
+                                
+                                //currentTripleAux = CurrenTriple+1 asumo que el proximo salto es el incondicional BI
+                                int currentTripleAux = CurrentTriple + 1;
+                                if (ConditionCounter > 0) 
+                                {
+                                    ConditionCounter--;
+                                    ComparatorIndex = IntermediateCodeGenerator.stackPop();
+                                    IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + currentTripleAux + "]");
+                                }
 
-                                IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
+                                ComparatorIndex = IntermediateCodeGenerator.stackPop();
+                                
+                                if(LogicOperator == "OR"){
+                                    IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + TrueConditionIndex + "]");
+                                }
+                                else{
+                                    //CurrenTriple+1 asumo que el proximo salto es el incondicional BI
+                                    IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + currentTripleAux + "]");
+                                }
+
+                                LogicOperator = "";
+
+                                BIIndex = IntermediateCodeGenerator.addTriple("BI",  "?" );
+                                IntermediateCodeGenerator.stackPush(BIIndex);
                             :}
-                            
-                            program CLOSE_CURLYBRACKET;
+                program CLOSE_CURLYBRACKET
+                            {:
+                                BIIndex = IntermediateCodeGenerator.stackPop();
+                                CurrentTriple = IntermediateCodeGenerator.getTripleCount();
+                                IntermediateCodeGenerator.updateTriple(BIIndex, "[" + CurrentTriple + "]");
+                            :};
 
-//Multiple Condition GCI PENDING
-condition ::= conditionTerm conditionConcat conditionTerm {: if(debug) { System.out.println("conditionTerm concat conditionTerm"); } :};
-condition ::= conditionTerm {: if(debug) { System.out.println("conditionTerm"); } :};
+//Multiple Condition GCI OK
+condition ::=   conditionTerm conditionConcat 
+                    {:
+                        if(LogicOperator == "OR")
+                        {
+                            IntermediateCodeGenerator.updateTripleOpCode(ComparatorIndex, CompOperator);
+                        }
+                    :}
+                conditionTerm
+                    {: 
+                        if(debug) { System.out.println("conditionTerm concat conditionTerm"); } 
+                        ConditionCounter++;
+
+                        TrueConditionIndex = IntermediateCodeGenerator.getTripleCount();
+                    :};
+
+//Simple Condition GCI PENDING
+condition ::= conditionTerm 
+                    {: 
+                        if(debug) { System.out.println("conditionTerm"); } 
+                    :};
 
 conditionTerm ::= expression 
                             {: LeftExpressionIndex = ExpressionIndex; :}
@@ -211,6 +273,10 @@ conditionTerm ::= expression
                                 ConditionTermIndex = IntermediateCodeGenerator.addTriple("CMP",  "[" + LeftExpressionIndex + "]",  "[" + ExpressionIndex + "]" );
 
                                 ComparatorIndex = IntermediateCodeGenerator.addTriple(OppositeCompOperator, "?");
+
+                                IntermediateCodeGenerator.stackPush(ComparatorIndex);
+
+                                if(debug2) { System.out.println("Stack Value: " + ComparatorIndex); } 
                             :};
 
 conditionTerm ::= NOT expression 
@@ -239,35 +305,36 @@ declarationList ::= declarationList declaration {: if(debug) { System.out.printl
 declaration ::= variableList COLON type 
                             {: if(debug) { System.out.println("Declaration"); } 
 
-                                while(VariableCount > 0)
-                                {
-                                    IntermediateCodeGenerator.addTriple("declare", "[" + FirstVariableIndex  + "]", "[" + TypeIndex + "]");
-                                    FirstVariableIndex++;
-                                    VariableCount--;
-                                }
+                                SymbolTableGenerator.UpdateVariablesType(VariableList, VariableType);
+                                VariableList.clear();
                             :};
 
 variableList ::= variable   {: 
                                 if(debug) { System.out.println("Variable"); } 
-                                VariableCount = 1;
-                                FirstVariableIndex = VariableIndex;
                             :};
 variableList ::= variableList COMMA variable 
                             {: 
                                 if(debug) { System.out.println("Variable list"); } 
-                                VariableCount++;
                             :};
 
 variable::= IDENTIFIER:id 
                             {: 
                                 if(debug) { System.out.println("Variable"); } 
-                                VariableIndex = IntermediateCodeGenerator.addTriple(id);
+
+                                if(DeclaredVariables.contains(id.toString()))
+                                {
+                                    System.out.println("Variable " + id.toString() + " already declared");
+                                    System.exit(0);
+                                }
+                                
+                                VariableList.add(id.toString());
+                                DeclaredVariables.add(id.toString());
                             :};
 
 //Type GCI OK
-type ::= INTEGERTYPE {: if(debug) { System.out.println("Int"); } TypeIndex = IntermediateCodeGenerator.addTriple("int"); :};
-type ::= FLOATTYPE {: if(debug) { System.out.println("Float"); } TypeIndex = IntermediateCodeGenerator.addTriple("float"); :};
-type ::= STRINGTYPE {: if(debug) { System.out.println("String"); } TypeIndex = IntermediateCodeGenerator.addTriple("string"); :};
+type ::= INTEGERTYPE {: if(debug) { System.out.println("Int"); } VariableType = SymbolTableGenerator.Type.CTE_INT; :};
+type ::= FLOATTYPE {: if(debug) { System.out.println("Float"); } VariableType = SymbolTableGenerator.Type.CTE_FLOAT; :};
+type ::= STRINGTYPE {: if(debug) { System.out.println("String"); } VariableType = SymbolTableGenerator.Type.CTE_STRING; :};
 
 //Expressions GCI OK
 expression ::= expression PLUS term {: if(debug) { System.out.println("+"); } ExpressionIndex = IntermediateCodeGenerator.addTriple("+", "[" + ExpressionIndex + "]", "[" +TermIndex + "]"); :};

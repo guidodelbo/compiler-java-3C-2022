@@ -4,6 +4,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 public class IntermediateCodeGenerator implements FileGenerator {
 
@@ -34,6 +35,11 @@ public class IntermediateCodeGenerator implements FileGenerator {
     //Update the triple
     public static void updateTriple(Integer position, String src) {
         triples.get(position).src = src;
+    }
+
+    //Update the triple
+    public static void updateTripleOpCode(Integer position, String opcode) {
+        triples.get(position).opcode = opcode;
     }
 
     //Triples
@@ -68,5 +74,35 @@ public class IntermediateCodeGenerator implements FileGenerator {
         for (Triple triple : triples) {
             fileWriter.write("[" + triple.position + "] " + "(" + triple.opcode + ", " + triple.src + ", " + triple.dest + ")\n");
         }
+    }
+
+    //Stack methods and properties
+    public static Stack<Integer> stack = new Stack<Integer>();
+
+    public static void stackPush(Integer value) {
+        stack.push(value);
+    }
+
+    public static Integer stackPop() {
+        return stack.pop();
+    }
+
+    public static Boolean isStackEmpty() {
+        return stack.empty();
+    }
+
+    //Stack methods and properties
+    public static Stack<Integer> conditionStack = new Stack<Integer>();
+
+    public static void conditionStackPush(Integer value) {
+        conditionStack.push(value);
+    }
+
+    public static Integer conditionStackPop() {
+        return conditionStack.pop();
+    }
+
+    public static Boolean conditionStackEmpty() {
+        return conditionStack.empty();
     }
 }
