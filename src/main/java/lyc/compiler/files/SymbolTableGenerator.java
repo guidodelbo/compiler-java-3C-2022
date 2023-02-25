@@ -24,6 +24,7 @@ public class SymbolTableGenerator implements FileGenerator{
         Type type;
         String value;
         Integer longitude;
+        boolean isDeclared;
         
         //equals
         @Override
@@ -60,6 +61,7 @@ public class SymbolTableGenerator implements FileGenerator{
         symbol.type = type;
         symbol.value = value;
         symbol.longitude = value.length();
+        symbol.isDeclared = false;
 
         if(!symbolTable.contains(symbol))
             symbolTable.add(symbol);
@@ -80,12 +82,56 @@ public class SymbolTableGenerator implements FileGenerator{
     public static void UpdateVariablesType(List<String> variables, Type type) {
         for (String variable : variables) {
             for (Symbol symbol : symbolTable) {
+                System.out.println("Chequeando Variable " + variable + ".");
+                if (isDeclared(variable)){
+                    System.out.println("Error: Variable " + variable + " ya ha sido declarada");
+                    System.exit(1);
+                }
+
                 if (symbol.name.equals(variable)) {
                     symbol.type = type;
+                    symbol.isDeclared = true;
                     break;
                 }
             }
         }
+    }
+
+    public static void checkSymbol(String symbolName, Type type){
+        if(isDeclared(symbolName))
+        {
+            Symbol symbolToValidate = symbolTable.stream().filter(symbol -> symbolName.equals(symbol.name))
+            .findFirst()
+            .orElseThrow(RuntimeException::new);
+            
+            if(symbolToValidate.type != type) {
+                System.out.println("Error: Error de tipo de dato en " + symbolName + ".");
+                System.exit(1);   
+            }
+        }
+    }
+
+    public static void checkSymbol(Object symbolName, Type type){
+        checkSymbol((String) symbolName, type);
+    }
+
+    public static void validateVariableDeclared(String variable) {
+        if (!isDeclared(variable)){
+            System.out.println("Error: Variable " + variable + " no ha sido declarada");
+            System.exit(1);
+        }
+    }
+
+    public static void validateVariableDeclared(Object variable) {
+        validateVariableDeclared((String) variable);
+    }
+
+    public static boolean isDeclared(String symbolName){
+        return symbolTable.stream().filter(symbol -> symbolName.equals(symbol.name)).findFirst().orElse(null).isDeclared;
+    }
+
+    public static boolean isDeclared(Object symbolName){
+        return isDeclared((String) symbolName);
     }
     
 }

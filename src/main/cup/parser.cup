@@ -60,7 +60,6 @@ action code {:
   private SymbolTableGenerator.Type VariableType = null;
 
   private List<String> VariableList = new ArrayList<String>();
-  private List<String> DeclaredVariables = new ArrayList<String>();
 :};
 
 // Terminals
@@ -142,8 +141,17 @@ sentence ::= assignment {: if(debug) { System.out.println("End"); } :};
 
 
 //Assignment GCI OK
-assignment ::= IDENTIFIER:id ASSIG expression {: if(debug) { System.out.println("Assignment:" + id); } IntermediateCodeGenerator.addTriple("=", id, "[" + ExpressionIndex + "]"); :};
-assignment ::= IDENTIFIER:id ASSIG STRING_CONSTANT:constant {: if(debug) { System.out.println("Assignment of string:" + id); } IntermediateCodeGenerator.addTriple("=", id, constant); :};
+assignment ::= IDENTIFIER:id ASSIG expression   {: if(debug) { System.out.println("Assignment:" + id); } 
+                                                    System.out.println("Assignment:" + id); 
+                                                    SymbolTableGenerator.validateVariableDeclared(id); //Valido que la variable este declarada
+                                                    IntermediateCodeGenerator.addTriple("=", id, "[" + ExpressionIndex + "]"); 
+                                                    //TODO: Validar el tipo de la expresion con el Id
+                                                    // SymbolTableGenerator.checkSymbol(id, expression.type);
+                                                :};
+assignment ::= IDENTIFIER:id ASSIG STRING_CONSTANT:constant 
+                                                {:  if(debug) { System.out.println("Assignment of string:" + id); } 
+                                                    IntermediateCodeGenerator.addTriple("=", id, constant); 
+                                                :};
 
 //Sentences GCI OK
 sentence ::= input {: if(debug) { System.out.println("Input"); } :};
@@ -327,14 +335,7 @@ variable::= IDENTIFIER:id
                             {: 
                                 if(debug) { System.out.println("Variable"); } 
 
-                                if(DeclaredVariables.contains(id.toString()))
-                                {
-                                    System.out.println("Variable " + id.toString() + " already declared");
-                                    System.exit(0);
-                                }
-                                
                                 VariableList.add(id.toString());
-                                DeclaredVariables.add(id.toString());
                             :};
 
 //Type GCI OK
@@ -401,13 +402,10 @@ factor ::= FIBONACCI OPEN_BRACKET fibovalue CLOSE_BRACKET
                                         int fiboCurrentIndex = IntermediateCodeGenerator.addTriple("@current");
                                         IntermediateCodeGenerator.addTriple("=",  "[" + fiboCurrentIndex + "]", 0);
 
-                                        
-
-
                                         // while ( n > 0 ) fiboPositionIndex = n
                                         int FiboStartIndex = IntermediateCodeGenerator.addTriple("CMP",  "[" + fiboPositionIndex + "]",  "0" );
                                         //La cantidad de saltos van a ser fijos, por lo tanto podemos hardcodear el valor
-                                        IntermediateCodeGenerator.addTriple("BLE",  "[" + (FiboStartIndex + 12) + "]");
+                                        IntermediateCodeGenerator.addTriple("BLE",  "[" + (FiboStartIndex + 13) + "]");
                                         
                                         //     if ( c <= 1 )
                                         ComparatorIndex = IntermediateCodeGenerator.addTriple("CMP",  "[" + fiboCurrentIndex + "]",  "1" );
@@ -442,8 +440,19 @@ factor ::= FIBONACCI OPEN_BRACKET fibovalue CLOSE_BRACKET
           
                                     
                                     :};
-fibovalue ::= IDENTIFIER:id  {: if(debug) { System.out.println("fibovalue Id: " + id); } FiboValueIndex = IntermediateCodeGenerator.addTriple(id); :};
-fibovalue ::= INTEGER_CONSTANT:constant {: if(debug) { System.out.println("fibovalue Int Constant: " + constant ); } FiboValueIndex = IntermediateCodeGenerator.addTriple(constant); :};
+fibovalue ::= IDENTIFIER:id  {: if(debug) { System.out.println("fibovalue Id: " + id); } 
+                                FiboValueIndex = IntermediateCodeGenerator.addTriple(id); 
+                                //VER si esta declarado y si el tipo es INT. Despues validar si es mayor a 0
+                                SymbolTableGenerator.checkSymbol(id, SymbolTableGenerator.Type.CTE_INT);
+                            :};
+fibovalue ::= INTEGER_CONSTANT:constant {: if(debug2) { System.out.println("fibovalue Int Constant: " + constant ); } 
+                                            FiboValueIndex = IntermediateCodeGenerator.addTriple(constant); 
+                                            //VALIDAR QUE SEA NATURAL > 0
+                                            if(Integer.valueOf((String) constant) <= 0){
+                                                System.out.println("Fibonacci: El valor debe ser un numero natural mayor a 0");
+                                                System.exit(1);
+                                            }
+                                        :};
 
 
 //ElementInTheMiddle GCI OK
