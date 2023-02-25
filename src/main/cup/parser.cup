@@ -46,6 +46,7 @@ action code {:
   private int MiddleIndex = 0;
   private int FirstElementIndex = 0;
   private int TrueConditionIndex = 0;
+  private int FiboValueIndex = 0;
 
   private String LogicOperator = "";
   private String CompOperator = "";
@@ -126,6 +127,7 @@ non terminal conditionTerm;
 non terminal variableList;
 non terminal variable;
 non terminal declarationBlock;
+non terminal fibovalue;
 
 // Start Symbol Definition
 // Use IntermediateCodeGenerator.java to generate the Intermediate Code using triplets
@@ -359,7 +361,87 @@ output ::= WRITE OPEN_BRACKET IDENTIFIER:id CLOSE_BRACKET {: if(debug) { System.
 
 //Temas Especiales
 //FIB GCI PENDING
-factor ::= FIBONACCI OPEN_BRACKET factor CLOSE_BRACKET {: if(debug) { System.out.println("Fibonacci"); } :};
+factor ::= FIBONACCI OPEN_BRACKET fibovalue CLOSE_BRACKET 
+                                    {: if(debug) { System.out.println("Fibonacci"); } 
+
+                                        //Generate the code for the Fibonacci function in the Intermediate Code
+                                        
+                                        // int valor, first = 0, second = 1, next, current = 0;
+                                        // while ( n > 0 )
+                                        // {
+                                        //     if ( c <= 1 )
+                                        //         next = c;
+                                        //     else
+                                        //     {
+                                        //         next = first + second;
+                                        //         first = second;
+                                        //         second = next;
+                                        //     }
+                                        //     n--;
+                                        //     printf("%d\n",next);
+                                        // }
+                                        // result = next;
+
+                                        int fiboPositionIndex = IntermediateCodeGenerator.addTriple("@fiboPosition");
+                                        IntermediateCodeGenerator.addTriple("=",  "[" + fiboPositionIndex + "]",  "[" + FiboValueIndex + "]");
+
+                                        // int valor, first = 0, second = 1, next, current = 0;
+                                        int fiboFirstIndex = IntermediateCodeGenerator.addTriple("@first");
+                                        IntermediateCodeGenerator.addTriple("=",  "[" + fiboFirstIndex + "]", 0);
+                                        
+                                        int fiboSecondIndex = IntermediateCodeGenerator.addTriple("@second");
+                                        IntermediateCodeGenerator.addTriple("=",  "[" + fiboSecondIndex + "]", 1);
+                                        
+                                        int fiboNextIndex = IntermediateCodeGenerator.addTriple("@next");
+
+                                        int fiboCurrentIndex = IntermediateCodeGenerator.addTriple("@current");
+                                        IntermediateCodeGenerator.addTriple("=",  "[" + fiboCurrentIndex + "]", 0);
+
+                                        
+
+
+                                        // while ( n > 0 ) fiboPositionIndex = n
+                                        int FiboStartIndex = IntermediateCodeGenerator.addTriple("CMP",  "[" + fiboPositionIndex + "]",  "0" );
+                                        //La cantidad de saltos van a ser fijos, por lo tanto podemos hardcodear el valor
+                                        IntermediateCodeGenerator.addTriple("BLE",  "[" + (FiboStartIndex + 12) + "]");
+                                        
+                                        //     if ( c <= 1 )
+                                        ComparatorIndex = IntermediateCodeGenerator.addTriple("CMP",  "[" + fiboCurrentIndex + "]",  "1" );
+                                        int FiboElseIndex = ComparatorIndex + 2;
+                                        IntermediateCodeGenerator.addTriple("BGT",  "[" + FiboElseIndex + "]",  "1" );
+
+                                        //         next = c;
+                                        int FiboAuxIndex = IntermediateCodeGenerator.addTriple("=",  "[" + fiboNextIndex + "]", "[" + fiboCurrentIndex + "]");
+                                        //La cantidad de saltos van a ser fijos, por lo tanto podemos hardcodear el valor
+                                        IntermediateCodeGenerator.addTriple("BI",  "[" + (FiboAuxIndex + 6 ) + "]");
+
+                                        //     else
+                                        //         next = first + second;
+                                        int FiboAddIndex = IntermediateCodeGenerator.addTriple("+", "[" + fiboFirstIndex + "]", "[" + fiboSecondIndex + "]");
+                                        IntermediateCodeGenerator.addTriple("=", "[" + fiboNextIndex + "]", "[" + FiboAddIndex + "]" );
+
+                                        //         first = second;
+                                        IntermediateCodeGenerator.addTriple("=", "[" + fiboFirstIndex + "]", "[" + fiboSecondIndex + "]" );
+
+
+                                        //         second = next;
+                                        IntermediateCodeGenerator.addTriple("=", "[" + fiboSecondIndex + "]", "[" + fiboNextIndex + "]" );
+
+                                        //     n--;
+                                        int FiboSubIndex = IntermediateCodeGenerator.addTriple("-", "[" + fiboPositionIndex + "]", "1");
+                                        IntermediateCodeGenerator.addTriple("=", "[" + fiboPositionIndex + "]", "[" + FiboSubIndex + "]" );
+
+                                        // fin while
+                                        IntermediateCodeGenerator.addTriple("BI",  "[" + FiboStartIndex + "]");
+
+                                        FactorIndex = fiboNextIndex;
+          
+                                    
+                                    :};
+fibovalue ::= IDENTIFIER:id  {: if(debug) { System.out.println("fibovalue Id: " + id); } FiboValueIndex = IntermediateCodeGenerator.addTriple(id); :};
+fibovalue ::= INTEGER_CONSTANT:constant {: if(debug) { System.out.println("fibovalue Int Constant: " + constant ); } FiboValueIndex = IntermediateCodeGenerator.addTriple(constant); :};
+
+
 //ElementInTheMiddle GCI OK
 factor ::= ELEMENTINTHEMIDDLE OPEN_BRACKET elementList CLOSE_BRACKET 
                                     {: 
@@ -382,51 +464,3 @@ elementList ::= factor {:
                             ElementListCount = 1;
 
                         :}; 
-
-
-/*
-List<Terce> terces = new ArrayList<>();
-
-  terces.add(new Terce(":=", "0", "", counter.toString()));  // Inicializar el contador en 0
-  terces.add(new Terce(":=", "0", "", temp1.toString()));    // Inicializar el primer término en 0
-  terces.add(new Terce(":=", "1", "", temp2.toString()));    // Inicializar el segundo término en 1
-
-  String label1 = "while_" + terces.size();  // Generar una etiqueta para el inicio del ciclo while
-  terces.add(new Terce("LABEL", "", "", label1));  // Agregar un terceto para la etiqueta
-
-  // Generar un terceto para comparar el contador con el valor de n
-  Terce cmpTerce = new Terce("<=", counter.toString(), Integer.toString(n), "");
-  terces.add(cmpTerce);
-
-  // Generar un terceto de salto condicional para salir del ciclo while si el contador es mayor que n
-  String label2 = "end_while_" + terces.size();
-  Terce jumpTerce = new Terce("JUMP_FALSE", cmpTerce.getResult(), "", label2);
-  terces.add(jumpTerce);
-
-  // Generar un terceto para sumar los dos términos previos de la secuencia
-  terces.add(new Terce("+", temp1.toString(), temp2.toString(), sum.toString()));
-
-  // Generar un terceto para actualizar los dos términos previos de la secuencia
-  terces.add(new Terce(":=", temp2.toString(), "", temp1.toString()));
-  terces.add(new Terce(":=", sum.toString(), "", temp2.toString()));
-
-  // Generar un terceto para incrementar el contador
-  Terce incTerce = new Terce("+=", counter.toString(), "1", "");
-  terces.add(incTerce);
-
-  // Generar un terceto para saltar al inicio del ciclo while
-  terces.add(new Terce("JUMP", "", "", label1));
-
-  String label3 = "end_while_" + terces.size();  // Generar una etiqueta para el final del ciclo while
-  terces.add(new Terce("LABEL", "", "", label3));  // Agregar un terceto para la etiqueta
-
-  // Generar un terceto para asignar el resultado a la variable correspondiente
-  terces.add(new Terce(":=", temp2.toString(), "", result.toString()));
-
-  // Crear una instancia de Expr con el resultado
-  Expr expr = new Expr(result.toString());
-
-  // Crear un nuevo terceto para asignar el resultado a la variable correspondiente
-  Terce assignTerce = new Terce(":=", expr.getValue(), "", "fibonacci_result");
-
-*/
