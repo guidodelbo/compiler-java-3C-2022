@@ -287,11 +287,15 @@ conditionTerm ::= NOT expression
                   comparitionOperator 
                   
                   expression 
-                            {: if(debug) { System.out.println("Condition"); } 
+                            {: if(debug) { System.out.println("NOT Condition"); } 
 
                                 ConditionTermIndex = IntermediateCodeGenerator.addTriple("CMP",  "[" + LeftExpressionIndex + "]",  "[" + ExpressionIndex + "]" );
 
-                                IntermediateCodeGenerator.addTriple(CompOperator, "?");
+                                ComparatorIndex = IntermediateCodeGenerator.addTriple(CompOperator, "?");
+
+                                IntermediateCodeGenerator.stackPush(ComparatorIndex);
+
+                                if(debug2) { System.out.println("Stack Value: " + ComparatorIndex); } 
                             :};
 
 conditionConcat ::= OR {: if(debug) { System.out.println("||"); } LogicOperator = "OR"; :};
