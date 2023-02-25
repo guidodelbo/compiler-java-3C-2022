@@ -11,7 +11,6 @@ class Parser;
 
 action code {:
   private boolean debug = false;
-  private boolean debug2 = true;
 
   private int FactorIndex = 0;
   private int TermIndex = 0;
@@ -142,7 +141,6 @@ sentence ::= assignment {: if(debug) { System.out.println("End"); } :};
 
 //Assignment GCI OK
 assignment ::= IDENTIFIER:id ASSIG expression   {: if(debug) { System.out.println("Assignment:" + id); } 
-                                                    System.out.println("Assignment:" + id); 
                                                     SymbolTableGenerator.validateVariableDeclared(id); //Valido que la variable este declarada
                                                     IntermediateCodeGenerator.addTriple("=", id, "[" + ExpressionIndex + "]"); 
                                                     //TODO: Validar el tipo de la expresion con el Id
@@ -208,7 +206,6 @@ selection ::= IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program 
 
                                 if (ConditionCounter > 0) 
                                 {
-                                    if(debug2) { System.out.println("Pop Value: " + ComparatorIndex); } 
                                     ComparatorIndex = IntermediateCodeGenerator.stackPop();
                                     IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
                                 }
@@ -286,7 +283,6 @@ conditionTerm ::= expression
 
                                 IntermediateCodeGenerator.stackPush(ComparatorIndex);
 
-                                if(debug2) { System.out.println("Stack Value: " + ComparatorIndex); } 
                             :};
 
 conditionTerm ::= NOT expression 
@@ -303,7 +299,6 @@ conditionTerm ::= NOT expression
 
                                 IntermediateCodeGenerator.stackPush(ComparatorIndex);
 
-                                if(debug2) { System.out.println("Stack Value: " + ComparatorIndex); } 
                             :};
 
 conditionConcat ::= OR {: if(debug) { System.out.println("||"); } LogicOperator = "OR"; :};
@@ -445,7 +440,7 @@ fibovalue ::= IDENTIFIER:id  {: if(debug) { System.out.println("fibovalue Id: " 
                                 //VER si esta declarado y si el tipo es INT. Despues validar si es mayor a 0
                                 SymbolTableGenerator.checkSymbol(id, SymbolTableGenerator.Type.CTE_INT);
                             :};
-fibovalue ::= INTEGER_CONSTANT:constant {: if(debug2) { System.out.println("fibovalue Int Constant: " + constant ); } 
+fibovalue ::= INTEGER_CONSTANT:constant {: if(debug) { System.out.println("fibovalue Int Constant: " + constant ); } 
                                             FiboValueIndex = IntermediateCodeGenerator.addTriple(constant); 
                                             //VALIDAR QUE SEA NATURAL > 0
                                             if(Integer.valueOf((String) constant) <= 0){

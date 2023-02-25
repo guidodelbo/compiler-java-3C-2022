@@ -82,7 +82,6 @@ public class SymbolTableGenerator implements FileGenerator{
     public static void UpdateVariablesType(List<String> variables, Type type) {
         for (String variable : variables) {
             for (Symbol symbol : symbolTable) {
-                System.out.println("Chequeando Variable " + variable + ".");
                 if (isDeclared(variable)){
                     System.out.println("Error: Variable " + variable + " ya ha sido declarada");
                     System.exit(1);
