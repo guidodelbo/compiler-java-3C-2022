@@ -159,93 +159,74 @@ sentence ::= selection {: if(debug) { System.out.println("Selection"); } :};
 sentence ::= declarationBlock {: if(debug) { System.out.println("DeclarationBlock"); } :};
 
 //Iteration GCI OK
-iteration ::= WHILE OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET CLOSE_CURLYBRACKET 
+iteration ::=       WHILE 
+                            {: 
+                                if(debug) { System.out.println("Empty iteration"); } 
+                                
+                                CurrentTriple = IntermediateCodeGenerator.getTripleCount();
+                                IntermediateCodeGenerator.stackPush(CurrentTriple);
+                            :}
+                    OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET 
                             {: 
                                 if(debug) { System.out.println("Empty iteration"); } 
                                 
                                 CurrentTriple = IntermediateCodeGenerator.getTripleCount() + 1;
+                                ComparatorIndex = IntermediateCodeGenerator.stackPop();
                                 IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
 
-                                ConditionTermIndex = IntermediateCodeGenerator.addTriple("BI",  "[" + LeftExpressionIndex + "]" );
+                                IntermediateCodeGenerator.conditionStackPop();
+
+                                int conditionStartIndex = IntermediateCodeGenerator.stackPop();
+                                ConditionTermIndex = IntermediateCodeGenerator.addTriple("BI",  "[" + conditionStartIndex + "]" );
                             :};
 
-iteration ::= WHILE OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET 
-                            {: 
-                                if(debug) { System.out.println("Iteration"); } 
-
-                                CurrentTriple = IntermediateCodeGenerator.getTripleCount() + 1;
-                                IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
-
-                                ConditionTermIndex = IntermediateCodeGenerator.addTriple("BI",  "[" + LeftExpressionIndex + "]" );
-
-                            :};
 
 //Selection GCI OK
-selection ::= IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET CLOSE_CURLYBRACKET 
-                            {: if(debug) { System.out.println("Empty selection"); } 
-                            
-                                CurrentTriple = IntermediateCodeGenerator.getTripleCount();
-
-                                IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
-                            :};
-
 selection ::= IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET 
                             {: 
                                 if(debug) { System.out.println("Selection"); } 
                                 
                                 CurrentTriple = IntermediateCodeGenerator.getTripleCount();
 
+                                ComparatorIndex = IntermediateCodeGenerator.stackPop();
                                 IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
-                            :};
+                                ConditionCounter--;
 
-selection ::= IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET ELSE OPEN_CURLYBRACKET CLOSE_CURLYBRACKET 
-                            {:  
-                                if(debug) { System.out.println("Selection with empty else"); } 
-                            
-                                CurrentTriple = IntermediateCodeGenerator.getTripleCount();
+                                boolean updateSecondCondition = IntermediateCodeGenerator.conditionStackPop();
 
-                                if (ConditionCounter > 0) 
-                                {
+                                if(updateSecondCondition) {
                                     ComparatorIndex = IntermediateCodeGenerator.stackPop();
                                     IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
+                                    ConditionCounter--;
                                 }
                             :};
 
 selection ::=   IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET ELSE OPEN_CURLYBRACKET 
-                            {:  
-                                if(debug) { System.out.println("Selection with else"); } 
-                                
+                            {:
+                                if(debug) { System.out.println("Selection with empty else and program"); } 
+                            
                                 CurrentTriple = IntermediateCodeGenerator.getTripleCount();
-                                
-                                //currentTripleAux = CurrenTriple+1 asumo que el proximo salto es el incondicional BI
-                                int currentTripleAux = CurrentTriple + 1;
-                                if (ConditionCounter > 0) 
-                                {
-                                    ConditionCounter--;
-                                    ComparatorIndex = IntermediateCodeGenerator.stackPop();
-                                    IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + currentTripleAux + "]");
-                                }
 
                                 ComparatorIndex = IntermediateCodeGenerator.stackPop();
-                                
-                                if(LogicOperator == "OR"){
-                                    IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + TrueConditionIndex + "]");
-                                }
-                                else{
-                                    //CurrenTriple+1 asumo que el proximo salto es el incondicional BI
-                                    IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + currentTripleAux + "]");
-                                }
+                                IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
+                                ConditionCounter--;
 
-                                LogicOperator = "";
+                                boolean updateSecondCondition = IntermediateCodeGenerator.conditionStackPop();
 
-                                BIIndex = IntermediateCodeGenerator.addTriple("BI",  "?" );
-                                IntermediateCodeGenerator.stackPush(BIIndex);
+                                if(updateSecondCondition) {
+                                    ComparatorIndex = IntermediateCodeGenerator.stackPop();
+                                    IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
+                                    ConditionCounter--;
+                                }
                             :}
+
                 program CLOSE_CURLYBRACKET
                             {:
-                                BIIndex = IntermediateCodeGenerator.stackPop();
-                                CurrentTriple = IntermediateCodeGenerator.getTripleCount();
-                                IntermediateCodeGenerator.updateTriple(BIIndex, "[" + CurrentTriple + "]");
+                                if(debug) { System.out.println("Selection with empty else and program"); } 
+
+                                // CurrentTriple = IntermediateCodeGenerator.getTripleCount();
+                                // ComparatorIndex = IntermediateCodeGenerator.stackPop();
+                                // IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
                             :};
 
 //Multiple Condition GCI OK
@@ -259,15 +240,31 @@ condition ::=   conditionTerm conditionConcat
                 conditionTerm
                     {: 
                         if(debug) { System.out.println("conditionTerm concat conditionTerm"); } 
-                        ConditionCounter++;
 
-                        TrueConditionIndex = IntermediateCodeGenerator.getTripleCount();
+                        if (LogicOperator == "AND")
+                        {
+                            IntermediateCodeGenerator.conditionStackPush(true);
+                        }
+                        else
+                        {
+                            IntermediateCodeGenerator.conditionStackPush(false);
+                            Integer NextTriple = IntermediateCodeGenerator.getTripleCount();
+
+                            int AuxComparatorIndex = IntermediateCodeGenerator.stackPop();
+
+                            ComparatorIndex = IntermediateCodeGenerator.stackPop();
+
+                            IntermediateCodeGenerator.stackPush(AuxComparatorIndex);
+
+                            IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + NextTriple.toString() + "]");
+                        }
                     :};
 
 //Simple Condition GCI PENDING
 condition ::= conditionTerm 
                     {: 
                         if(debug) { System.out.println("conditionTerm"); } 
+                        IntermediateCodeGenerator.conditionStackPush(false);
                     :};
 
 conditionTerm ::= expression 
@@ -280,9 +277,7 @@ conditionTerm ::= expression
                                 ConditionTermIndex = IntermediateCodeGenerator.addTriple("CMP",  "[" + LeftExpressionIndex + "]",  "[" + ExpressionIndex + "]" );
 
                                 ComparatorIndex = IntermediateCodeGenerator.addTriple(OppositeCompOperator, "?");
-
                                 IntermediateCodeGenerator.stackPush(ComparatorIndex);
-
                             :};
 
 conditionTerm ::= NOT expression 
