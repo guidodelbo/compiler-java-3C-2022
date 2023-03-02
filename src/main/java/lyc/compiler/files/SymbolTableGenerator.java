@@ -132,6 +132,10 @@ public class SymbolTableGenerator implements FileGenerator{
     public static boolean isDeclared(Object symbolName){
         return isDeclared((String) symbolName);
     }
+
+    public static Type getType(String symbolName){
+        return symbolTable.stream().filter(symbol -> symbolName.equals(symbol.name)).findFirst().orElse(null).type;
+    }
     
 }
     
