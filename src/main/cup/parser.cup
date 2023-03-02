@@ -6,6 +6,7 @@ import java.util.List;
 
 import lyc.compiler.files.IntermediateCodeGenerator;
 import lyc.compiler.files.SymbolTableGenerator;
+import lyc.compiler.files.AsmCodeGenerator;
 
 class Parser;
 
@@ -132,8 +133,12 @@ non terminal fibovalue;
 start with startprogram;
 
 //Base GCI OK
-startprogram ::=;
-startprogram ::= program;
+startprogram ::={: 
+                            AsmCodeGenerator.translate_intermediateCode();
+                :};
+startprogram ::= program {: 
+                            AsmCodeGenerator.translate_intermediateCode();
+                         :};
 program ::= sentence {:  if(debug) { System.out.println("Program"); } :};
 program ::= program sentence {: if(debug) { System.out.println("Program"); }:};
 sentence ::= assignment {: if(debug) { System.out.println("End"); } :};

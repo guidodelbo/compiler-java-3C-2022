@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Stack;
 
 public class IntermediateCodeGenerator implements FileGenerator {
+    public static List<Triple> triples = new ArrayList<>();
 
     public static class Triple {
         public Integer position;
@@ -26,6 +27,10 @@ public class IntermediateCodeGenerator implements FileGenerator {
         return triples.size();
     }
 
+    public static List<Triple> getTriples() {
+        return triples;
+    }
+
     //Update the triple
     public static void updateTriple(Integer position, String src, String dest) {
         triples.get(position).src = src;
@@ -42,8 +47,6 @@ public class IntermediateCodeGenerator implements FileGenerator {
         triples.get(position).opcode = opcode;
     }
 
-    //Triples
-    public static List<Triple> triples = new ArrayList<>();
 
     public static Integer addTriple(Object opcode, Object src, Object dest) {
         Triple newTriple = new Triple(opcode.toString(), src.toString(), dest.toString());

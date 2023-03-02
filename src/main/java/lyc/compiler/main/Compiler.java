@@ -6,6 +6,7 @@ import java.io.Reader;
 
 import lyc.compiler.factories.FileFactory;
 import lyc.compiler.factories.ParserFactory;
+import lyc.compiler.files.AsmCodeGenerator;
 import lyc.compiler.files.FileOutputWriter;
 import lyc.compiler.files.IntermediateCodeGenerator;
 import lyc.compiler.files.SymbolTableGenerator;

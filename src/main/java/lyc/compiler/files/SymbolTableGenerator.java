@@ -132,6 +132,24 @@ public class SymbolTableGenerator implements FileGenerator{
     public static boolean isDeclared(Object symbolName){
         return isDeclared((String) symbolName);
     }
+
+    public static List<Symbol> get_symbolTable(){
+       return symbolTable;
+    }
+
+    public static Symbol get_symbol_fromTable(Object lexeme){
+        String str_lexeme = lexeme.toString();
+        String val = str_lexeme.replace(".","_");
+        val = val.replace("-","_");
+
+        for(Symbol s: symbolTable){
+            if(s.name.equals(str_lexeme) || s.name.equals(val)){
+                return s;
+            }
+        }
+        return null;
+    }
+            
     
 }
     
