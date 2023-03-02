@@ -55,16 +55,16 @@ public class SymbolTableGenerator implements FileGenerator{
     );
 
     public static void addSymbol(String name, Type type, String value) {
-        Symbol symbol = new SymbolTableGenerator().new Symbol();
+        Symbol newSymbol = new SymbolTableGenerator().new Symbol();
 
-        symbol.name = name;
-        symbol.type = type;
-        symbol.value = value;
-        symbol.longitude = value.length();
-        symbol.isDeclared = false;
+        newSymbol.name = name;
+        newSymbol.type = type;
+        newSymbol.value = value;
+        newSymbol.longitude = value.length();
+        newSymbol.isDeclared = false;
 
-        if(!symbolTable.contains(symbol))
-            symbolTable.add(symbol);
+        if (symbolTable.stream().filter(symbol -> name.equals(symbol.name)).findFirst().orElse(null) == null)
+            symbolTable.add(newSymbol);
     }
 
     @Override
@@ -137,13 +137,26 @@ public class SymbolTableGenerator implements FileGenerator{
        return symbolTable;
     }
 
-    public static Symbol get_symbol_fromTable(Object lexeme){
+    public static Symbol get_symbol_fromTable_byName(Object lexeme){
         String str_lexeme = lexeme.toString();
         String val = str_lexeme.replace(".","_");
         val = val.replace("-","_");
 
         for(Symbol s: symbolTable){
             if(s.name.equals(str_lexeme) || s.name.equals(val)){
+                return s;
+            }
+        }
+        return null;
+    }
+
+    public static Symbol get_symbol_fromTable_byValue(Object lexeme){
+        String str_lexeme = lexeme.toString();
+        String val = str_lexeme.replace(".","_");
+        val = val.replace("-","_");
+
+        for(Symbol s: symbolTable){
+            if(s.value.equals(str_lexeme) || s.value.equals(val)){
                 return s;
             }
         }

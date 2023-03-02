@@ -2,13 +2,12 @@ package lyc.compiler.files;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
 
-import lyc.compiler.files.SymbolTableGenerator;
 import lyc.compiler.files.IntermediateCodeGenerator.Triple;
 import lyc.compiler.files.SymbolTableGenerator.Symbol;
-import lyc.compiler.files.IntermediateCodeGenerator;
 
 public class AsmCodeGenerator implements FileGenerator {
 
@@ -102,9 +101,11 @@ public class AsmCodeGenerator implements FileGenerator {
         List<Triple> triples = IntermediateCodeGenerator.getTriples();
         Stack<String> stack = new Stack<>();
 
+        //INSERCION DE ETIQUETAS
+        triples = extract_labels(triples);
+
         if(__logmsg){
             System.out.println("*****************");
-            //System.out.println(polaca);
         }
 
         for(Triple triple: triples){
@@ -117,6 +118,13 @@ public class AsmCodeGenerator implements FileGenerator {
                         System.out.println(stack);
                         System.out.println("*****************");
                     }
+
+                    _code += "\nfld " + stack.pop();
+                    _code += "\nfstp " + triple.src;
+
+
+                    _code += "\nDisplayFloat " + triple.src + "," + 2;
+                    _code += "\nnewLine";
                 break;
 
                 case "+":
@@ -246,68 +254,102 @@ public class AsmCodeGenerator implements FileGenerator {
                         else if(triple.opcode.equals("BNE")){
                             _code += "\njne ";
                         }
+                        
+                        _code += "LBL"+Integer.parseInt(triple.src.substring(1, triple.src.length()-1));
+
                         cmp = false;
                         continue;
                     }
-                    if(triple.opcode.startsWith("__etiqueta")){
+                    if(triple.opcode.equals("LABEL")){
                         if(__logmsg){
                             System.out.println("etiqueta");
                             System.out.println("*****************");
                         }
-                        if(triple.opcode.contains(":")){
-                            _code += "\n" + triple;
-                            continue;
-                        }
-                        _code += triple.opcode;
+                        _code += "\n";
+                        _code += triple.src + ":";
                         continue;
                     }
-                    if(asig){
+                    // if(asig){
                         
-                        String val = stack.pop();
+                    //     String val = stack.pop();
                         
-                        System.out.println(val);
+                    //     System.out.println(val);
 
-                        Symbol symbol = SymbolTableGenerator.get_symbol_fromTable(val);
-                        if(symbol != null && (val.startsWith("_str") || symbol.type == SymbolTableGenerator.Type.CTE_STRING)){
-                            _code += "STRCPY " + triple.opcode + "," + val;
-                            asig = false;
-                            continue;
-                        }
-                        else{
-                            _code += "\nfld " + val;
-                            _code += "\nfstp " + triple.opcode;
-                            asig = false;
-                            continue;
-                        }
+                    //     Symbol symbol = SymbolTableGenerator.get_symbol_fromTable(val);
+                    //     if(symbol != null && (val.startsWith("_str") || symbol.type == SymbolTableGenerator.Type.CTE_STRING)){
+                    //         _code += "STRCPY " + triple.opcode + "," + val;
+                    //         asig = false;
+                    //         continue;
+                    //     }
+                    //     else{
+                    //         _code += "\nfld " + val;
+                    //         _code += "\nfstp " + triple.opcode;
+                    //         asig = false;
+                    //         continue;
+                    //     }
+                    // }
+                    // if(read){
+                    //   _code += "\ngetString " + triple.opcode;
+                    //   read = false;
+                    //   continue;
+                    // }
+                    // if(write){
+                    //     Symbol symbol = SymbolTableGenerator.get_symbol_fromTable(triple.opcode);
+                    //     if(symbol == null){
+                    //         System.out.println("ERROR");
+                    //         System.exit(0);
+                    //     }
+                    //     if(symbol.type == SymbolTableGenerator.Type.CTE_STRING){
+                    //         _code += "\ndisplayString " + triple.opcode;
+                    //     }
+                    //     else if(symbol.type == SymbolTableGenerator.Type.CTE_STRING){
+                    //         _code += "\nDisplayFloat " + triple.opcode + "," + aux_dec_int;
+                    //     }
+                    //     else if(symbol.type == SymbolTableGenerator.Type.CTE_STRING){
+                    //         _code += "\nDisplayFloat " + triple.opcode + "," + aux_dec_float;
+                    //     }
+                    //     _code += "\nnewLine\n";
+                    //     write = false;
+                    //     continue;
+                    // }
+
+                    Symbol symbol = SymbolTableGenerator.get_symbol_fromTable_byValue(triple.opcode);
+                    
+                    String valueForStack = triple.opcode;
+                    
+                    if(symbol.type == SymbolTableGenerator.Type.CTE_STRING
+                        || symbol.type == SymbolTableGenerator.Type.CTE_FLOAT
+                        || symbol.type == SymbolTableGenerator.Type.CTE_INT)
+                    {
+                        valueForStack = "_" + valueForStack;
                     }
-                    if(read){
-                      _code += "\ngetString " + triple.opcode;
-                      read = false;
-                      continue;
-                    }
-                    if(write){
-                        Symbol symbol = SymbolTableGenerator.get_symbol_fromTable(triple.opcode);
-                        if(symbol == null){
-                            System.out.println("ERROR");
-                            System.exit(0);
-                        }
-                        if(symbol.type == SymbolTableGenerator.Type.CTE_STRING){
-                            _code += "\ndisplayString " + triple.opcode;
-                        }
-                        else if(symbol.type == SymbolTableGenerator.Type.CTE_STRING){
-                            _code += "\nDisplayFloat " + triple.opcode + "," + aux_dec_int;
-                        }
-                        else if(symbol.type == SymbolTableGenerator.Type.CTE_STRING){
-                            _code += "\nDisplayFloat " + triple.opcode + "," + aux_dec_float;
-                        }
-                        _code += "\nnewLine\n";
-                        write = false;
-                        continue;
-                    }
-                    stack.push(triple.opcode);
+
+                    stack.push(valueForStack);
                 break;
             }
         }
+    }
+
+    private static List<Triple> extract_labels(List<Triple> triples) {
+        List<Triple> result = new ArrayList<Triple>(triples);
+
+        for(Triple triple : triples){
+            if(triple.opcode.equals("BLE")
+            || triple.opcode.equals("BGE")
+            || triple.opcode.equals("BNE")
+            || triple.opcode.equals("BGT")
+            || triple.opcode.equals("BLT"))
+            {
+                System.out.println(triple.src);
+                int index = Integer.parseInt(triple.src.substring(1, triple.src.length()-1));
+                System.out.println(index);                
+                result.add(index, new Triple("LABEL", "LBL" + index, ""));
+                System.out.println("inserto");                
+            }
+        }
+
+        System.out.println("end");
+        return result;
     }
 
 
