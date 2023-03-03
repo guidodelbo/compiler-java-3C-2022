@@ -1,12 +1,193 @@
 /* ------------------------Declaracion------------------------ */
 
 init { 
- id1, id2: Int 
+    a1, b1 : Float 
+    a, b, c, d, e, f, g, i, j, h, k, l, n, m, o, q, r, s, t, u, v, p, w, x, y, z, variable1, variable2, id : Int 
+    j1, j2, j3 : String 
+    p1, p2, p3, numvar, var1, var2 : String 
+    /* redeclaro variables */ 
+    /* a1, b1 : String */ 
 } 
  
 /* ------------------------Asignacion------------------------ */
 
-id1 = 1
-id2 = FIB(7)
+j1 = "texto"
+j2 = ""
+a = 5
+b = 10
+c = 3
+d = 7
+e = 7
+j = 7
+z = 15
 
-write(id2)
+/* ------------------------Comentario------------------------ */
+
+/**/
+/* */
+/* comentario */
+/* <>#$_°|* */
+/* "string dentro de comentario " */
+/* Esto es un comentario */
+/*123abc456*/
+
+/* ------------------------Seleccion------------------------ */
+
+if (a < b){ a = 10  }
+
+if (a > b) { a = 10 }
+
+if(a > b) { a = 10  }
+
+if(a< b) {  a = 10 }
+
+if(a>b){  a = 10 }
+
+if (a <b) {  a = 10 }
+
+/* ------------------------Seleccion anidada------------------------ */
+
+if (a > b){
+ if (a > c)   {
+   if (c < c){
+     a = 10 
+   }
+ }
+}
+
+/* ------------------------Seleccion multiple------------------------ */
+
+if(a < b & c > d){  a = 10 }
+
+if(a > a || b < z){  a = 10 }
+
+/* ------------------------Seleccion negada------------------------ */
+
+if (not a > b)
+{
+ a = 10 
+}
+
+/* ------------------------Iteracion------------------------ */
+
+while(a>b){ a = 10 }
+
+while (a < b){
+   a = 10 
+}
+
+/* ------------------------Iteracion anidada------------------------ */
+
+while (a < b){
+ while (c > b){
+   while (a < c){
+     a = 10 
+   }
+ }
+}
+
+/*------------------------Expresion------------------------*/
+
+c=d*(e + 21)/4
+
+a = b + c * ( j + 15) / 2 + 3
+
+
+/*------------------------Salida------------------------*/
+
+write(a)
+write(b)
+
+/*------------------------Temas especiales------------------------*/
+
+/* ElementInTheMiddle*/
+
+/* Asigna el valor de la variable "d" a la variable "x"*/
+x = ElementInTheMiddle(a, b, c, 1, d, 99, 100, 5, e) 
+
+/* Asigna el valor 2 a la variable "x" */
+x = ElementInTheMiddle(1, 2, 3)
+
+/* Asigna el valor 1 a la variable "x" */
+x = ElementInTheMiddle(1) 
+
+/* Fibonacci de 5 */
+x = FIB(5) 
+write(x)
+
+/* Fibonacci de 10 */
+x = FIB(10) 
+write(x)
+
+/*------------------------Casos de error------------------------*/
+
+/* Constante string sin las comillas que cierran */
+/*"Hola, mundo!*/
+
+/* Constante string fuera de rango */
+/*"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"*/
+
+/* Constante entera fuera de rango */
+/*a = 999999*/
+/*a = -999999*/
+
+/* Constante float fuera de rango */
+/*a = 999999999999999999999.9*/
+
+/* Seleccion a la que le falta un parentesis */
+/*if (a > b {}*/
+
+/*if a < b){}*/
+
+/* Seleccion a la que le falta una llave */
+/*if(a > b){*/
+
+/*if(a > b) }*/
+
+/* Seleccion con una condicion no valida */
+/*if(if(a>b)){}*/
+
+/*if (not a > b || a < c){}*/
+
+/* Seleccion con una condicion vacia */
+/*if(){}*/
+
+/* Iteracion con una condicion vacia */
+/*while(){}*/
+
+/* Iteracion con una condicion no valida */
+/*while(123){}*/
+
+/* Iteracion a la que le falta una llave */
+/*while(a < b){*/
+
+/* Id fuera del rango permitido */
+/*aaaaaaaaaaaaaaaaaaa = 10*/
+
+/* Entrada con parametro erroneo */
+/*read(123)*/
+/*read(3.14)*/
+/*read("cadena")*/
+/*read(while(a>b){})*/
+/*read()*/
+
+/* Salida con parametro erroneo */
+/*write()*/
+/*write(REPEAT 10 [a=0])*/
+/*write(a+b)*/
+/*write(if(a<v){})*/
+
+/* Comentario sin cerrar */
+/* /* Comentario */
+
+/* EITM Con cantidad de parametros pares*/
+/*x = ElementInTheMiddle(1, 3)*/
+
+/* EITM Sin parametros*/
+/*x = ElementInTheMiddle() */
+
+/* Fibonacci de numero no natural */
+/*x = FIB(-5) */
+
+/* Fibonacci de 0 */
+/* x = FIB(0)  */
