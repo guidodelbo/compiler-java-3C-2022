@@ -139,7 +139,7 @@ WhiteSpace = {LineTerminator} | {Identation}
                                                                                   );
                                                 }
 
-                                              SymbolTableGenerator.addSymbol(yytext(), SymbolTableGenerator.Type.ID, "");
+                                              SymbolTableGenerator.addSymbol(yytext(), SymbolTableGenerator.Type.ID, yytext());
                                               
                                               return symbol(ParserSym.IDENTIFIER, yytext()); 
                                             }

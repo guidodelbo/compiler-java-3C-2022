@@ -201,6 +201,7 @@ public class AsmCodeGenerator implements FileGenerator {
                         System.out.println("*****************");
                     }
                     _code += "\njmp ";
+                    _code += "LBL"+Integer.parseInt(triple.src.substring(1, triple.src.length()-1));
                 break;
 
                 case "READ":
@@ -313,6 +314,8 @@ public class AsmCodeGenerator implements FileGenerator {
                     //     continue;
                     // }
 
+                    System.out.println("debug");
+
                     Symbol symbol = SymbolTableGenerator.get_symbol_fromTable_byValue(triple.opcode);
                     
                     String valueForStack = triple.opcode;
@@ -338,7 +341,8 @@ public class AsmCodeGenerator implements FileGenerator {
             || triple.opcode.equals("BGE")
             || triple.opcode.equals("BNE")
             || triple.opcode.equals("BGT")
-            || triple.opcode.equals("BLT"))
+            || triple.opcode.equals("BLT")
+            || triple.opcode.equals("BI"))
             {
                 System.out.println(triple.src);
                 int index = Integer.parseInt(triple.src.substring(1, triple.src.length()-1));
@@ -348,11 +352,15 @@ public class AsmCodeGenerator implements FileGenerator {
             }
         }
 
+        for(Triple triple : result){
+            System.out.print(triple.opcode);
+            System.out.print(triple.src);                
+            System.out.println(triple.dest);                
+        }
+
         System.out.println("end");
         return result;
     }
-
-
 
 }
         

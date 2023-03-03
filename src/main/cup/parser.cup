@@ -228,7 +228,8 @@ selection ::= IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program 
 selection ::=   IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET ELSE OPEN_CURLYBRACKET 
                             {:
                                 if(debug) { System.out.println("Selection with empty else and program"); } 
-                            
+
+
                                 CurrentTriple = IntermediateCodeGenerator.getTripleCount();
 
                                 ComparatorIndex = IntermediateCodeGenerator.stackPop();
@@ -242,11 +243,18 @@ selection ::=   IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET progra
                                     IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
                                     ConditionCounter--;
                                 }
+
+                                Integer inconditionalJumpIndex = IntermediateCodeGenerator.addTriple("BI",  "[?]");
+                                IntermediateCodeGenerator.stackPush(inconditionalJumpIndex);
+
                             :}
 
                 program CLOSE_CURLYBRACKET
                             {:
                                 if(debug) { System.out.println("Selection with empty else and program"); } 
+                                CurrentTriple = IntermediateCodeGenerator.getTripleCount();
+                                Integer inconditionalJumpIndex = IntermediateCodeGenerator.stackPop();
+                                IntermediateCodeGenerator.updateTriple(inconditionalJumpIndex, "[" + CurrentTriple + "]");
 
                                 // CurrentTriple = IntermediateCodeGenerator.getTripleCount();
                                 // ComparatorIndex = IntermediateCodeGenerator.stackPop();
