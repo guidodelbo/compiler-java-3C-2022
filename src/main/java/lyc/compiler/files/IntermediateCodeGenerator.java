@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Stack;
 
 public class IntermediateCodeGenerator implements FileGenerator {
+    public static List<Triple> triples = new ArrayList<>();
 
     public static class Triple {
         public Integer position;
@@ -20,10 +21,21 @@ public class IntermediateCodeGenerator implements FileGenerator {
             this.src = src;
             this.dest = dest;
         }
+
+        public Triple(int position, String opcode, String src, String dest) {
+            this.position = position;
+            this.opcode = opcode;
+            this.src = src;
+            this.dest = dest;
+        }
     }
 
     public static int getTripleCount() {
         return triples.size();
+    }
+
+    public static List<Triple> getTriples() {
+        return triples;
     }
 
     //Update the triple
@@ -42,8 +54,6 @@ public class IntermediateCodeGenerator implements FileGenerator {
         triples.get(position).opcode = opcode;
     }
 
-    //Triples
-    public static List<Triple> triples = new ArrayList<>();
 
     public static Integer addTriple(Object opcode, Object src, Object dest) {
         Triple newTriple = new Triple(opcode.toString(), src.toString(), dest.toString());
@@ -92,13 +102,13 @@ public class IntermediateCodeGenerator implements FileGenerator {
     }
 
     //Stack methods and properties
-    public static Stack<Integer> conditionStack = new Stack<Integer>();
+    public static Stack<Boolean> conditionStack = new Stack<Boolean>();
 
-    public static void conditionStackPush(Integer value) {
+    public static void conditionStackPush(Boolean value) {
         conditionStack.push(value);
     }
 
-    public static Integer conditionStackPop() {
+    public static Boolean conditionStackPop() {
         return conditionStack.pop();
     }
 

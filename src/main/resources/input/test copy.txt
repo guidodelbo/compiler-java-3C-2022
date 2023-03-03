@@ -11,15 +11,18 @@ init {
  
 /* ------------------------Asignacion------------------------ */
 
-j1 = "texto"
-j2 = ""
-a = 5
-b = 10
-c = 3
-d = 7
-e = 7
-j = 7
-z = 15
+id = id /* id - id */
+id = 1
+id = 123
+id = .1
+id = 1.05
+id = 19.
+id = -.9
+id = -1.1
+id = "texto"
+id = ""
+id = 333
+id = -333
 
 /* ------------------------Comentario------------------------ */
 
@@ -33,47 +36,45 @@ z = 15
 
 /* ------------------------Seleccion------------------------ */
 
-if (a < b){ a = 10  }
+if (a < b){ }
 
 if (a > b) { a = 10 }
 
-if(a > b) { a = 10  }
+if(a > b) { }
 
-if(a< b) {  a = 10 }
+if(a< b) { }
 
-if(a>b){  a = 10 }
+if(a>b){}
 
-if (a <b) {  a = 10 }
+if (a <b) {}
 
 /* ------------------------Seleccion anidada------------------------ */
 
 if (a > b){
  if (a > c)   {
    if (c < c){
-     a = 10 
    }
  }
 }
 
 /* ------------------------Seleccion multiple------------------------ */
 
-if(a < b & c > d){  a = 10 }
+if(a < b & c > d){}
 
-if(a > a || b < z){  a = 10 }
+if(a > a || b < z){}
 
 /* ------------------------Seleccion negada------------------------ */
 
 if (not a > b)
 {
- a = 10 
+
 }
 
 /* ------------------------Iteracion------------------------ */
 
-while(a>b){ a = 10 }
+while(a>b){}
 
 while (a < b){
-   a = 10 
 }
 
 /* ------------------------Iteracion anidada------------------------ */
@@ -81,29 +82,33 @@ while (a < b){
 while (a < b){
  while (c > b){
    while (a < c){
-     a = 10 
    }
  }
 }
 
 /*------------------------Expresion------------------------*/
 
-c=d*(e + 21)/4
+c=d*(e- 21)/4
 
-a = b + c * ( j + 15) / 2 + 3
+a = b + c * ( j + -15) / 2 + 3
 
+/*------------------------Entrada------------------------*/
+
+read(var1)
+read ( var2 )
 
 /*------------------------Salida------------------------*/
 
-write(a)
-write(b)
+write("String")
+write(numvar)
+write("")
 
 /*------------------------Temas especiales------------------------*/
 
 /* ElementInTheMiddle*/
 
 /* Asigna el valor de la variable "d" a la variable "x"*/
-x = ElementInTheMiddle(a, b, c, 1, d, 99, 100, 5, e) 
+x = ElementInTheMiddle(a, b, c, 1.0, d, 99, 100, -5, e) 
 
 /* Asigna el valor 2 a la variable "x" */
 x = ElementInTheMiddle(1, 2, 3)
@@ -113,11 +118,9 @@ x = ElementInTheMiddle(1)
 
 /* Fibonacci de 5 */
 x = FIB(5) 
-write(x)
 
 /* Fibonacci de 10 */
 x = FIB(10) 
-write(x)
 
 /*------------------------Casos de error------------------------*/
 

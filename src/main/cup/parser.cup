@@ -6,6 +6,7 @@ import java.util.List;
 
 import lyc.compiler.files.IntermediateCodeGenerator;
 import lyc.compiler.files.SymbolTableGenerator;
+import lyc.compiler.files.AsmCodeGenerator;
 
 class Parser;
 
@@ -46,6 +47,11 @@ action code {:
   private int FirstElementIndex = 0;
   private int TrueConditionIndex = 0;
   private int FiboValueIndex = 0;
+  private SymbolTableGenerator.Type LeftExpressionType = null;
+  private SymbolTableGenerator.Type RightExpressionType = null;
+  private SymbolTableGenerator.Type ExpressionType = null;
+  private SymbolTableGenerator.Type FactorType = null;
+  private SymbolTableGenerator.Type TermType = null;
 
   private String LogicOperator = "";
   private String CompOperator = "";
@@ -132,8 +138,12 @@ non terminal fibovalue;
 start with startprogram;
 
 //Base GCI OK
-startprogram ::=;
-startprogram ::= program;
+startprogram ::={: 
+                            AsmCodeGenerator.translate_intermediateCode();
+                :};
+startprogram ::= program {: 
+                            AsmCodeGenerator.translate_intermediateCode();
+                         :};
 program ::= sentence {:  if(debug) { System.out.println("Program"); } :};
 program ::= program sentence {: if(debug) { System.out.println("Program"); }:};
 sentence ::= assignment {: if(debug) { System.out.println("End"); } :};
@@ -143,12 +153,26 @@ sentence ::= assignment {: if(debug) { System.out.println("End"); } :};
 assignment ::= IDENTIFIER:id ASSIG expression   {: if(debug) { System.out.println("Assignment:" + id); } 
                                                     SymbolTableGenerator.validateVariableDeclared(id); //Valido que la variable este declarada
                                                     IntermediateCodeGenerator.addTriple("=", id, "[" + ExpressionIndex + "]"); 
-                                                    //TODO: Validar el tipo de la expresion con el Id
-                                                    // SymbolTableGenerator.checkSymbol(id, expression.type);
+
+                                                    //Valido que el tipo de la variable sea el mismo que el de la expresion
+                                                    SymbolTableGenerator.Type variableType = SymbolTableGenerator.getType(id.toString());
+                                                    if(variableType != ExpressionType) {
+                                                        System.out.println("Error: Type mismatch in assignment of variable " + id.toString());
+                                                        System.exit(1);
+                                                    }
                                                 :};
+
 assignment ::= IDENTIFIER:id ASSIG STRING_CONSTANT:constant 
                                                 {:  if(debug) { System.out.println("Assignment of string:" + id); } 
                                                     IntermediateCodeGenerator.addTriple("=", id, constant); 
+
+                                                    //Valido que el tipo de la variable sea el mismo que el de la expresion
+                                                    SymbolTableGenerator.Type variableType = SymbolTableGenerator.getType(id.toString());
+
+                                                    if(variableType != SymbolTableGenerator.Type.STRING) {
+                                                        System.out.println("Error: Type mismatch in assignment of variable " + id.toString());
+                                                        System.exit(1);
+                                                    }
                                                 :};
 
 //Sentences GCI OK
@@ -159,93 +183,82 @@ sentence ::= selection {: if(debug) { System.out.println("Selection"); } :};
 sentence ::= declarationBlock {: if(debug) { System.out.println("DeclarationBlock"); } :};
 
 //Iteration GCI OK
-iteration ::= WHILE OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET CLOSE_CURLYBRACKET 
+iteration ::=       WHILE 
+                            {: 
+                                if(debug) { System.out.println("Empty iteration"); } 
+                                
+                                CurrentTriple = IntermediateCodeGenerator.getTripleCount();
+                                IntermediateCodeGenerator.stackPush(CurrentTriple);
+                            :}
+                    OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET 
                             {: 
                                 if(debug) { System.out.println("Empty iteration"); } 
                                 
                                 CurrentTriple = IntermediateCodeGenerator.getTripleCount() + 1;
+                                ComparatorIndex = IntermediateCodeGenerator.stackPop();
                                 IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
 
-                                ConditionTermIndex = IntermediateCodeGenerator.addTriple("BI",  "[" + LeftExpressionIndex + "]" );
+                                IntermediateCodeGenerator.conditionStackPop();
+
+                                int conditionStartIndex = IntermediateCodeGenerator.stackPop();
+                                ConditionTermIndex = IntermediateCodeGenerator.addTriple("BI",  "[" + conditionStartIndex + "]" );
                             :};
 
-iteration ::= WHILE OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET 
-                            {: 
-                                if(debug) { System.out.println("Iteration"); } 
-
-                                CurrentTriple = IntermediateCodeGenerator.getTripleCount() + 1;
-                                IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
-
-                                ConditionTermIndex = IntermediateCodeGenerator.addTriple("BI",  "[" + LeftExpressionIndex + "]" );
-
-                            :};
 
 //Selection GCI OK
-selection ::= IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET CLOSE_CURLYBRACKET 
-                            {: if(debug) { System.out.println("Empty selection"); } 
-                            
-                                CurrentTriple = IntermediateCodeGenerator.getTripleCount();
-
-                                IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
-                            :};
-
 selection ::= IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET 
                             {: 
                                 if(debug) { System.out.println("Selection"); } 
                                 
                                 CurrentTriple = IntermediateCodeGenerator.getTripleCount();
 
+                                ComparatorIndex = IntermediateCodeGenerator.stackPop();
                                 IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
-                            :};
+                                ConditionCounter--;
 
-selection ::= IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET ELSE OPEN_CURLYBRACKET CLOSE_CURLYBRACKET 
-                            {:  
-                                if(debug) { System.out.println("Selection with empty else"); } 
-                            
-                                CurrentTriple = IntermediateCodeGenerator.getTripleCount();
+                                boolean updateSecondCondition = IntermediateCodeGenerator.conditionStackPop();
 
-                                if (ConditionCounter > 0) 
-                                {
+                                if(updateSecondCondition) {
                                     ComparatorIndex = IntermediateCodeGenerator.stackPop();
                                     IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
+                                    ConditionCounter--;
                                 }
                             :};
 
 selection ::=   IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET program CLOSE_CURLYBRACKET ELSE OPEN_CURLYBRACKET 
-                            {:  
-                                if(debug) { System.out.println("Selection with else"); } 
-                                
+                            {:
+                                if(debug) { System.out.println("Selection with empty else and program"); } 
+
+                                Integer inconditionalJumpIndex = IntermediateCodeGenerator.addTriple("BI",  "[?]");
+
                                 CurrentTriple = IntermediateCodeGenerator.getTripleCount();
-                                
-                                //currentTripleAux = CurrenTriple+1 asumo que el proximo salto es el incondicional BI
-                                int currentTripleAux = CurrentTriple + 1;
-                                if (ConditionCounter > 0) 
-                                {
-                                    ConditionCounter--;
-                                    ComparatorIndex = IntermediateCodeGenerator.stackPop();
-                                    IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + currentTripleAux + "]");
-                                }
 
                                 ComparatorIndex = IntermediateCodeGenerator.stackPop();
-                                
-                                if(LogicOperator == "OR"){
-                                    IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + TrueConditionIndex + "]");
-                                }
-                                else{
-                                    //CurrenTriple+1 asumo que el proximo salto es el incondicional BI
-                                    IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + currentTripleAux + "]");
+                                IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
+                                ConditionCounter--;
+
+                                boolean updateSecondCondition = IntermediateCodeGenerator.conditionStackPop();
+
+                                if(updateSecondCondition) {
+                                    ComparatorIndex = IntermediateCodeGenerator.stackPop();
+                                    IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
+                                    ConditionCounter--;
                                 }
 
-                                LogicOperator = "";
+                                IntermediateCodeGenerator.stackPush(inconditionalJumpIndex);
 
-                                BIIndex = IntermediateCodeGenerator.addTriple("BI",  "?" );
-                                IntermediateCodeGenerator.stackPush(BIIndex);
                             :}
+
                 program CLOSE_CURLYBRACKET
                             {:
-                                BIIndex = IntermediateCodeGenerator.stackPop();
+                                if(debug) { System.out.println("Selection with empty else and program"); } 
                                 CurrentTriple = IntermediateCodeGenerator.getTripleCount();
-                                IntermediateCodeGenerator.updateTriple(BIIndex, "[" + CurrentTriple + "]");
+                                Integer inconditionalJumpIndex = IntermediateCodeGenerator.stackPop();
+                                IntermediateCodeGenerator.updateTriple(inconditionalJumpIndex, "[" + CurrentTriple + "]");
+
+                                // CurrentTriple = IntermediateCodeGenerator.getTripleCount();
+                                // ComparatorIndex = IntermediateCodeGenerator.stackPop();
+                                // IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + CurrentTriple + "]");
                             :};
 
 //Multiple Condition GCI OK
@@ -259,30 +272,53 @@ condition ::=   conditionTerm conditionConcat
                 conditionTerm
                     {: 
                         if(debug) { System.out.println("conditionTerm concat conditionTerm"); } 
-                        ConditionCounter++;
 
-                        TrueConditionIndex = IntermediateCodeGenerator.getTripleCount();
+                        if (LogicOperator == "AND")
+                        {
+                            IntermediateCodeGenerator.conditionStackPush(true);
+                        }
+                        else
+                        {
+                            IntermediateCodeGenerator.conditionStackPush(false);
+                            Integer NextTriple = IntermediateCodeGenerator.getTripleCount();
+
+                            int AuxComparatorIndex = IntermediateCodeGenerator.stackPop();
+
+                            ComparatorIndex = IntermediateCodeGenerator.stackPop();
+
+                            IntermediateCodeGenerator.stackPush(AuxComparatorIndex);
+
+                            IntermediateCodeGenerator.updateTriple(ComparatorIndex, "[" + NextTriple.toString() + "]");
+                        }
                     :};
 
 //Simple Condition GCI PENDING
 condition ::= conditionTerm 
                     {: 
                         if(debug) { System.out.println("conditionTerm"); } 
+                        IntermediateCodeGenerator.conditionStackPush(false);
                     :};
 
 conditionTerm ::= expression 
-                            {: LeftExpressionIndex = ExpressionIndex; :}
+                            {: 
+                                LeftExpressionIndex = ExpressionIndex; 
+                                LeftExpressionType = ExpressionType;
+                            :}
                   comparitionOperator 
                   
                   expression 
                             {:  if(debug) { System.out.println("Condition"); } 
-                              
+
+                                //check if the types are the same
+                                if(LeftExpressionType != ExpressionType)
+                                {
+                                    System.out.println("Error: Types are not the same");
+                                    System.exit(1);
+                                }
+
                                 ConditionTermIndex = IntermediateCodeGenerator.addTriple("CMP",  "[" + LeftExpressionIndex + "]",  "[" + ExpressionIndex + "]" );
-
                                 ComparatorIndex = IntermediateCodeGenerator.addTriple(OppositeCompOperator, "?");
-
                                 IntermediateCodeGenerator.stackPush(ComparatorIndex);
-
                             :};
 
 conditionTerm ::= NOT expression 
@@ -334,30 +370,136 @@ variable::= IDENTIFIER:id
                             :};
 
 //Type GCI OK
-type ::= INTEGERTYPE {: if(debug) { System.out.println("Int"); } VariableType = SymbolTableGenerator.Type.CTE_INT; :};
-type ::= FLOATTYPE {: if(debug) { System.out.println("Float"); } VariableType = SymbolTableGenerator.Type.CTE_FLOAT; :};
-type ::= STRINGTYPE {: if(debug) { System.out.println("String"); } VariableType = SymbolTableGenerator.Type.CTE_STRING; :};
+type ::= INTEGERTYPE {: if(debug) { System.out.println("Int"); } VariableType = SymbolTableGenerator.Type.INT; :};
+type ::= FLOATTYPE {: if(debug) { System.out.println("Float"); } VariableType = SymbolTableGenerator.Type.FLOAT; :};
+type ::= STRINGTYPE {: if(debug) { System.out.println("String"); } VariableType = SymbolTableGenerator.Type.STRING; :};
 
 //Expressions GCI OK
-expression ::= expression PLUS term {: if(debug) { System.out.println("+"); } ExpressionIndex = IntermediateCodeGenerator.addTriple("+", "[" + ExpressionIndex + "]", "[" +TermIndex + "]"); :};
-expression ::= expression SUB term {: if(debug) { System.out.println("-"); } ExpressionIndex = IntermediateCodeGenerator.addTriple("-", "[" + ExpressionIndex + "]", "[" +TermIndex + "]"); :};
-expression ::= term {: if(debug) { System.out.println("Expression = Term"); } ExpressionIndex = TermIndex; :};
+expression ::= expression PLUS term {: 
+                                        if(debug) { System.out.println("+"); } 
+                                        ExpressionIndex = IntermediateCodeGenerator.addTriple("+", "[" + ExpressionIndex + "]", "[" +TermIndex + "]"); 
 
+                                        // If expressionType or termType are string, then throw error
+                                        if (ExpressionType == SymbolTableGenerator.Type.STRING || TermType == SymbolTableGenerator.Type.STRING)
+                                        {
+                                            System.out.println("Error: Cannot add string to other type");
+                                            System.exit(1);
+                                        }
+
+                                        // If expressionType or termType are float, then the result is float
+                                        if (ExpressionType == SymbolTableGenerator.Type.FLOAT || TermType == SymbolTableGenerator.Type.FLOAT)
+                                        {
+                                            ExpressionType = SymbolTableGenerator.Type.FLOAT;
+                                        }
+                                        else
+                                        {
+                                            ExpressionType = SymbolTableGenerator.Type.INT;
+                                        }
+                                    :};
+
+expression ::= expression SUB term  {: 
+                                        if(debug) { System.out.println("-"); } 
+                                        ExpressionIndex = IntermediateCodeGenerator.addTriple("-", "[" + ExpressionIndex + "]", "[" +TermIndex + "]"); 
+
+                                        // If expressionType or termType are string, then throw error
+                                        if (ExpressionType == SymbolTableGenerator.Type.STRING || TermType == SymbolTableGenerator.Type.STRING)
+                                        {
+                                            System.out.println("Error: Cannot subtract strings");
+                                            System.exit(1);
+                                        }
+
+                                        // If expressionType or termType are float, then the result is float
+                                        if (ExpressionType == SymbolTableGenerator.Type.FLOAT || TermType == SymbolTableGenerator.Type.FLOAT)
+                                        {
+                                            ExpressionType = SymbolTableGenerator.Type.FLOAT;
+                                        }
+                                        else
+                                        {
+                                            ExpressionType = SymbolTableGenerator.Type.INT;
+                                        }
+                                    :};
+
+expression ::= term                 {: 
+                                        if(debug) { System.out.println("Expression = Term"); } 
+                                        ExpressionIndex = TermIndex; 
+                                        ExpressionType = TermType;
+                                    :};
 //Terms GCI OK
-term ::= term MULT factor {: if(debug) { System.out.println("*"); } TermIndex = IntermediateCodeGenerator.addTriple("*", "[" + TermIndex + "]", "[" +FactorIndex + "]"); :};
-term ::= term DIV factor {: if(debug) { System.out.println("/"); } TermIndex = IntermediateCodeGenerator.addTriple("/", "[" + TermIndex + "]", "[" +FactorIndex + "]"); :};
-term ::= factor {: if(debug) { System.out.println("Term = factor"); } TermIndex = FactorIndex; :};
+term ::= term MULT factor           {: 
+                                        if(debug) { System.out.println("*"); } 
+                                        TermIndex = IntermediateCodeGenerator.addTriple("*", "[" + TermIndex + "]", "[" +FactorIndex + "]"); 
+
+                                        // If termType or factorType are string, then throw error
+                                        if (TermType == SymbolTableGenerator.Type.STRING || FactorType == SymbolTableGenerator.Type.STRING)
+                                        {
+                                            System.out.println("Error: Cannot multiply strings");
+                                            System.exit(0);
+                                        }
+
+                                        // If termType or factorType are float, then the result is float
+                                        if (TermType == SymbolTableGenerator.Type.FLOAT || FactorType == SymbolTableGenerator.Type.FLOAT)
+                                        {
+                                            TermType = SymbolTableGenerator.Type.FLOAT;
+                                        }
+                                        else
+                                        {
+                                            TermType = SymbolTableGenerator.Type.INT;
+                                        }
+                                    :};
+
+term ::= term DIV factor            {: 
+                                        if(debug) { System.out.println("/"); } 
+                                        TermIndex = IntermediateCodeGenerator.addTriple("/", "[" + TermIndex + "]", "[" +FactorIndex + "]"); 
+
+                                        // If termType or factorType are string, then throw error
+                                        if (TermType == SymbolTableGenerator.Type.STRING || FactorType == SymbolTableGenerator.Type.STRING)
+                                        {
+                                            System.out.println("Error: Cannot divide strings");
+                                            System.exit(0);
+                                        }
+                                        
+                                        // If termType or factorType are float, then the result is float
+                                        if (TermType == SymbolTableGenerator.Type.FLOAT || FactorType == SymbolTableGenerator.Type.FLOAT)
+                                        {
+                                            TermType = SymbolTableGenerator.Type.FLOAT;
+                                        }
+                                        else
+                                        {
+                                            TermType = SymbolTableGenerator.Type.INT;
+                                        }
+                                    :};
+
+term ::= factor                     {: 
+                                        if(debug) { System.out.println("Term = factor"); } TermIndex = FactorIndex; 
+                                        TermType = FactorType;
+                                    :};
 
 //Factor GCI OK
-factor ::= OPEN_BRACKET expression CLOSE_BRACKET {: if(debug) { System.out.println("Factor = (Expression)"); } FactorIndex = ExpressionIndex; :};
-factor ::= IDENTIFIER:id  {: if(debug) { System.out.println("Id: " + id); } FactorIndex = IntermediateCodeGenerator.addTriple(id); :};
-factor ::= INTEGER_CONSTANT:constant {: if(debug) { System.out.println("Int Constant: " + constant ); } FactorIndex = IntermediateCodeGenerator.addTriple(constant); :};
-factor ::= FLOAT_CONSTANT:constant {: if(debug) { System.out.println("Float Constant: " + constant ); } FactorIndex = IntermediateCodeGenerator.addTriple(constant); :};
+factor ::= OPEN_BRACKET expression CLOSE_BRACKET 
+                                    {: if(debug) { System.out.println("Factor = (Expression)"); } 
+                                        FactorIndex = ExpressionIndex; 
+                                        FactorType = ExpressionType;
+                                    :};
+factor ::= IDENTIFIER:id  
+                                    {: if(debug) { System.out.println("Id: " + id); } 
+                                        FactorIndex = IntermediateCodeGenerator.addTriple(id); 
+                                        FactorType = SymbolTableGenerator.getType(id.toString());
+                                    :};
+factor ::= INTEGER_CONSTANT:constant 
+                                    {:  if(debug) { System.out.println("Int Constant: " + constant ); } 
+                                        FactorIndex = IntermediateCodeGenerator.addTriple(constant); 
+                                        FactorType = SymbolTableGenerator.Type.INT;
+                                    :};
+factor ::= FLOAT_CONSTANT:constant 
+                                    {: if(debug) { System.out.println("Float Constant: " + constant ); } 
+                                        FactorIndex = IntermediateCodeGenerator.addTriple(constant); 
+                                        FactorType = SymbolTableGenerator.Type.FLOAT;
+                                    :};
 
 //I/O  GCI OK
-input ::= READ OPEN_BRACKET IDENTIFIER:id CLOSE_BRACKET {: if(debug) { System.out.println("Input"); } IntermediateCodeGenerator.addTriple("read", id); :};
-output ::= WRITE OPEN_BRACKET STRING_CONSTANT:constant CLOSE_BRACKET {: if(debug) { System.out.println("Output"); } IntermediateCodeGenerator.addTriple("write", constant); :};
-output ::= WRITE OPEN_BRACKET IDENTIFIER:id CLOSE_BRACKET {: if(debug) { System.out.println("Output"); } IntermediateCodeGenerator.addTriple("write", id); :};
+input ::= READ OPEN_BRACKET IDENTIFIER:id CLOSE_BRACKET {: if(debug) { System.out.println("Input"); } IntermediateCodeGenerator.addTriple("READ", id); :};
+output ::= WRITE OPEN_BRACKET STRING_CONSTANT:constant CLOSE_BRACKET {: if(debug) { System.out.println("Output"); } IntermediateCodeGenerator.addTriple("WRITE", constant); :};
+output ::= WRITE OPEN_BRACKET IDENTIFIER:id CLOSE_BRACKET {: if(debug) { System.out.println("Output"); } IntermediateCodeGenerator.addTriple("WRITE", id); :};
 
 //Temas Especiales
 //FIB GCI PENDING
@@ -367,66 +509,79 @@ factor ::= FIBONACCI OPEN_BRACKET fibovalue CLOSE_BRACKET
                                         //Generate the code for the Fibonacci function in the Intermediate Code
                                         
                                         // int valor, first = 0, second = 1, next, current = 0;
-                                        // while ( n > 0 )
+                                        // while ( fiboPosition > 0 )
                                         // {
-                                        //     if ( c <= 1 )
+                                        //     if ( current <= 1 )
                                         //         next = c;
+                                        //         current ++;
                                         //     else
                                         //     {
                                         //         next = first + second;
                                         //         first = second;
                                         //         second = next;
                                         //     }
-                                        //     n--;
+                                        //     fiboPosition--;
                                         //     printf("%d\n",next);
                                         // }
                                         // result = next;
 
-                                        int fiboPositionIndex = IntermediateCodeGenerator.addTriple("@fiboPosition");
-                                        IntermediateCodeGenerator.addTriple("=",  "[" + fiboPositionIndex + "]",  "[" + FiboValueIndex + "]");
+                                        SymbolTableGenerator.addSymbol("@fiboPosition", SymbolTableGenerator.Type.INT, "@fiboPosition");
+                                        SymbolTableGenerator.addSymbol("@first", SymbolTableGenerator.Type.INT, "@first");
+                                        SymbolTableGenerator.addSymbol("@second", SymbolTableGenerator.Type.INT, "@second");
+                                        SymbolTableGenerator.addSymbol("@next", SymbolTableGenerator.Type.INT, "@next");
+                                        SymbolTableGenerator.addSymbol("@current", SymbolTableGenerator.Type.INT, "@current");
+                                        SymbolTableGenerator.addSymbol("_0", SymbolTableGenerator.Type.CTE_INT, "0");
+                                        SymbolTableGenerator.addSymbol("_1", SymbolTableGenerator.Type.CTE_INT, "1");
+
+
+                                        IntermediateCodeGenerator.addTriple("=",  "@fiboPosition",  "[" + FiboValueIndex + "]");
 
                                         // int valor, first = 0, second = 1, next, current = 0;
-                                        int fiboFirstIndex = IntermediateCodeGenerator.addTriple("@first");
-                                        IntermediateCodeGenerator.addTriple("=",  "[" + fiboFirstIndex + "]", 0);
+                                        IntermediateCodeGenerator.addTriple("=",  "@first", "[" + IntermediateCodeGenerator.addTriple("0") + "]");
                                         
-                                        int fiboSecondIndex = IntermediateCodeGenerator.addTriple("@second");
-                                        IntermediateCodeGenerator.addTriple("=",  "[" + fiboSecondIndex + "]", 1);
+                                        IntermediateCodeGenerator.addTriple("=",  "@second", "[" + IntermediateCodeGenerator.addTriple("1") + "]");
                                         
                                         int fiboNextIndex = IntermediateCodeGenerator.addTriple("@next");
-
-                                        int fiboCurrentIndex = IntermediateCodeGenerator.addTriple("@current");
-                                        IntermediateCodeGenerator.addTriple("=",  "[" + fiboCurrentIndex + "]", 0);
+                                        
+                                        IntermediateCodeGenerator.addTriple("=",  "@current", "[" + IntermediateCodeGenerator.addTriple("0") + "]");
+                                        
 
                                         // while ( n > 0 ) fiboPositionIndex = n
-                                        int FiboStartIndex = IntermediateCodeGenerator.addTriple("CMP",  "[" + fiboPositionIndex + "]",  "0" );
+                                        int FiboStartIndex = IntermediateCodeGenerator.addTriple("@fiboPosition");
+                                        IntermediateCodeGenerator.addTriple("CMP",  "[" + FiboStartIndex + "]", "[" + IntermediateCodeGenerator.addTriple("0") + "]" );
                                         //La cantidad de saltos van a ser fijos, por lo tanto podemos hardcodear el valor
-                                        IntermediateCodeGenerator.addTriple("BLE",  "[" + (FiboStartIndex + 13) + "]");
+                                        IntermediateCodeGenerator.addTriple("BLE",  "[" + (FiboStartIndex + 28) + "]");
                                         
                                         //     if ( c <= 1 )
-                                        ComparatorIndex = IntermediateCodeGenerator.addTriple("CMP",  "[" + fiboCurrentIndex + "]",  "1" );
-                                        int FiboElseIndex = ComparatorIndex + 2;
-                                        IntermediateCodeGenerator.addTriple("BGT",  "[" + FiboElseIndex + "]",  "1" );
+                                        ComparatorIndex = IntermediateCodeGenerator.addTriple("CMP",  "[" + IntermediateCodeGenerator.addTriple("@current") + "]", "[" + IntermediateCodeGenerator.addTriple("1") + "]" );
+                                        int FiboElseIndex = ComparatorIndex + 9;
+                                        IntermediateCodeGenerator.addTriple("BGT",  "[" + FiboElseIndex + "]");
 
                                         //         next = c;
-                                        int FiboAuxIndex = IntermediateCodeGenerator.addTriple("=",  "[" + fiboNextIndex + "]", "[" + fiboCurrentIndex + "]");
+                                        int FiboAuxIndex = IntermediateCodeGenerator.addTriple("=",  "@next", "[" + IntermediateCodeGenerator.addTriple("@current") + "]");
+                                        
+                                        //         current ++;
+                                        int currentAddIndex = IntermediateCodeGenerator.addTriple("+", "[" + IntermediateCodeGenerator.addTriple("@current") + "]", "[" + IntermediateCodeGenerator.addTriple("1") + "]");
+                                        IntermediateCodeGenerator.addTriple("=", "@current", "[" + currentAddIndex + "]" );
+
                                         //La cantidad de saltos van a ser fijos, por lo tanto podemos hardcodear el valor
-                                        IntermediateCodeGenerator.addTriple("BI",  "[" + (FiboAuxIndex + 6 ) + "]");
+                                        IntermediateCodeGenerator.addTriple("BI",  "[" + (FiboAuxIndex + 15 ) + "]");
 
                                         //     else
                                         //         next = first + second;
-                                        int FiboAddIndex = IntermediateCodeGenerator.addTriple("+", "[" + fiboFirstIndex + "]", "[" + fiboSecondIndex + "]");
-                                        IntermediateCodeGenerator.addTriple("=", "[" + fiboNextIndex + "]", "[" + FiboAddIndex + "]" );
+                                        int FiboAddIndex = IntermediateCodeGenerator.addTriple("+", "[" + IntermediateCodeGenerator.addTriple("@first") + "]", "[" + IntermediateCodeGenerator.addTriple("@second") + "]");
+                                        IntermediateCodeGenerator.addTriple("=", "@next", "[" + FiboAddIndex + "]" );
 
                                         //         first = second;
-                                        IntermediateCodeGenerator.addTriple("=", "[" + fiboFirstIndex + "]", "[" + fiboSecondIndex + "]" );
+                                        IntermediateCodeGenerator.addTriple("=", "@first", "[" + IntermediateCodeGenerator.addTriple("@second") + "]" );
 
 
                                         //         second = next;
-                                        IntermediateCodeGenerator.addTriple("=", "[" + fiboSecondIndex + "]", "[" + fiboNextIndex + "]" );
+                                        IntermediateCodeGenerator.addTriple("=", "@second", "[" + IntermediateCodeGenerator.addTriple("@next") + "]" );
 
                                         //     n--;
-                                        int FiboSubIndex = IntermediateCodeGenerator.addTriple("-", "[" + fiboPositionIndex + "]", "1");
-                                        IntermediateCodeGenerator.addTriple("=", "[" + fiboPositionIndex + "]", "[" + FiboSubIndex + "]" );
+                                        int FiboSubIndex = IntermediateCodeGenerator.addTriple("-", "[" + IntermediateCodeGenerator.addTriple("@fiboPosition") + "]", "[" + IntermediateCodeGenerator.addTriple("1") + "]");
+                                        IntermediateCodeGenerator.addTriple("=", "@fiboPosition", "[" + FiboSubIndex + "]" );
 
                                         // fin while
                                         IntermediateCodeGenerator.addTriple("BI",  "[" + FiboStartIndex + "]");
@@ -435,11 +590,13 @@ factor ::= FIBONACCI OPEN_BRACKET fibovalue CLOSE_BRACKET
           
                                     
                                     :};
+
 fibovalue ::= IDENTIFIER:id  {: if(debug) { System.out.println("fibovalue Id: " + id); } 
                                 FiboValueIndex = IntermediateCodeGenerator.addTriple(id); 
                                 //VER si esta declarado y si el tipo es INT. Despues validar si es mayor a 0
-                                SymbolTableGenerator.checkSymbol(id, SymbolTableGenerator.Type.CTE_INT);
+                                SymbolTableGenerator.checkSymbol(id, SymbolTableGenerator.Type.INT);
                             :};
+
 fibovalue ::= INTEGER_CONSTANT:constant {: if(debug) { System.out.println("fibovalue Int Constant: " + constant ); } 
                                             FiboValueIndex = IntermediateCodeGenerator.addTriple(constant); 
                                             //VALIDAR QUE SEA NATURAL > 0
@@ -448,7 +605,6 @@ fibovalue ::= INTEGER_CONSTANT:constant {: if(debug) { System.out.println("fibov
                                                 System.exit(1);
                                             }
                                         :};
-
 
 //ElementInTheMiddle GCI OK
 factor ::= ELEMENTINTHEMIDDLE OPEN_BRACKET elementList CLOSE_BRACKET 
