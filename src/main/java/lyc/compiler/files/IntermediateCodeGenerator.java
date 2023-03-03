@@ -95,13 +95,13 @@ public class IntermediateCodeGenerator implements FileGenerator {
     }
 
     //Stack methods and properties
-    public static Stack<Integer> conditionStack = new Stack<Integer>();
+    public static Stack<Boolean> conditionStack = new Stack<Boolean>();
 
-    public static void conditionStackPush(Integer value) {
+    public static void conditionStackPush(Boolean value) {
         conditionStack.push(value);
     }
 
-    public static Integer conditionStackPop() {
+    public static Boolean conditionStackPop() {
         return conditionStack.pop();
     }
 

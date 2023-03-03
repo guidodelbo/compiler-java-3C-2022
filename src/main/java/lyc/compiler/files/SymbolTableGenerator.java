@@ -14,6 +14,9 @@ public class SymbolTableGenerator implements FileGenerator{
 
     public static enum Type {
         ID,
+        INT,
+        FLOAT,
+        STRING,
         CTE_INT,
         CTE_FLOAT,
         CTE_STRING
@@ -50,8 +53,11 @@ public class SymbolTableGenerator implements FileGenerator{
     private Map<Type, Integer> maxLenByType = Map.of(
         Type.ID, Constants.MAX_ID,
         Type.CTE_INT, Integer.toString(Constants.MAX_INT).length(),
+        Type.INT, Integer.toString(Constants.MAX_INT).length(),
         Type.CTE_FLOAT, Double.toString(Constants.MAX_FLOAT).length(),
-        Type.CTE_STRING, Constants.MAX_STRING
+        Type.FLOAT, Double.toString(Constants.MAX_FLOAT).length(),
+        Type.CTE_STRING, Constants.MAX_STRING,
+        Type.STRING, Constants.MAX_STRING
     );
 
     public static void addSymbol(String name, Type type, String value) {
@@ -66,7 +72,7 @@ public class SymbolTableGenerator implements FileGenerator{
         if (symbolTable.stream().filter(symbol -> name.equals(symbol.name)).findFirst().orElse(null) == null)
             symbolTable.add(newSymbol);
     }
-
+    
     @Override
     public void generate(FileWriter fileWriter) throws IOException {
         fileWriter.write("Symbol Table \n");
@@ -163,6 +169,9 @@ public class SymbolTableGenerator implements FileGenerator{
         return null;
     }
             
+    public static Type getType(String symbolName){
+        return symbolTable.stream().filter(symbol -> symbolName.equals(symbol.name)).findFirst().orElse(null).type;
+    }
     
 }
     
