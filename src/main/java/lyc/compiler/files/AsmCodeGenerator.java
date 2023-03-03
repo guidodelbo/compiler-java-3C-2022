@@ -64,7 +64,7 @@ public class AsmCodeGenerator implements FileGenerator {
         List<Symbol> symbolTable = SymbolTableGenerator.get_symbolTable();
 
         for(Symbol s: symbolTable){
-            if(s.type == SymbolTableGenerator.Type.CTE_STRING){
+            if(s.type == SymbolTableGenerator.Type.CTE_STRING || s.type == SymbolTableGenerator.Type.STRING){
                 _data += s.name + " db ";
             }
             else{
@@ -74,7 +74,7 @@ public class AsmCodeGenerator implements FileGenerator {
             //cte
             if(s.name.startsWith("_")){
                 if(s.type == SymbolTableGenerator.Type.CTE_STRING){
-                    _data += "\"" + s.value + "\",\"$\"";
+                    _data += "\"" + s.value + "\",0";
                 }
                 else if(s.type == SymbolTableGenerator.Type.CTE_INT){
                     _data += s.value + ".0";
@@ -95,11 +95,9 @@ public class AsmCodeGenerator implements FileGenerator {
         translate_symbolTable();
 
         boolean cmp = false;
-        boolean asig = false;
-        boolean read = false;
-        boolean write = false;
         List<Triple> triples = IntermediateCodeGenerator.getTriples();
         Stack<String> stack = new Stack<>();
+        Symbol symbol;
 
         //INSERCION DE ETIQUETAS
         triples = extract_labels(triples);
@@ -112,19 +110,22 @@ public class AsmCodeGenerator implements FileGenerator {
             //System.out.println("Valor: " + s);
             switch(triple.opcode){
                 case "=":
-                    asig = true;
                     if(__logmsg){
                         System.out.println("Desapilando por =");
                         System.out.println(stack);
                         System.out.println("*****************");
                     }
 
-                    _code += "\nfld " + stack.pop();
-                    _code += "\nfstp " + triple.src;
+                    symbol = SymbolTableGenerator.get_symbol_fromTable_byValue(triple.src);
 
+                    if(symbol != null && (symbol.type == SymbolTableGenerator.Type.CTE_STRING || symbol.type == SymbolTableGenerator.Type.STRING)){
+                        _code += "\nSTRCPY " + triple.src + "," + triple.dest;
+                    }
+                    else{
+                        _code += "\nfld " + stack.pop();
+                        _code += "\nfstp " + triple.src;
+                    }
 
-                    _code += "\nDisplayFloat " + triple.src + "," + 2;
-                    _code += "\nnewLine";
                 break;
 
                 case "+":
@@ -201,15 +202,18 @@ public class AsmCodeGenerator implements FileGenerator {
                         System.out.println("*****************");
                     }
                     _code += "\njmp ";
+                    System.out.println("ANTES BI");
                     _code += "LBL"+Integer.parseInt(triple.src.substring(1, triple.src.length()-1));
-                break;
+                    System.out.println("DESPUES BI");
+                    break;
 
                 case "READ":
                     if(__logmsg){
                         System.out.println("read");
                         System.out.println("*****************");
                     }
-                    read = true;
+
+                    _code += "\ngetString " + triple.opcode;
                 break;
 
                 case "WRITE":
@@ -217,7 +221,21 @@ public class AsmCodeGenerator implements FileGenerator {
                         System.out.println("write");
                         System.out.println("*****************");
                     }
-                    write = true;
+
+                    symbol = SymbolTableGenerator.get_symbol_fromTable_byValue(triple.src);
+
+                    if(symbol == null){
+                        System.out.println("ERROR");
+                        System.exit(0);
+                    }
+                    if(symbol.type == SymbolTableGenerator.Type.CTE_STRING || symbol.type == SymbolTableGenerator.Type.STRING){
+                        _code += "\ndisplayString " + triple.src;
+                    }
+                    else {
+                        _code += "\nDisplayFloat " + triple.src + "," + aux_dec_float;
+                    }
+                    _code += "\nnewLine\n";
+
                 break;
 
                 case "WHILE":
@@ -225,15 +243,6 @@ public class AsmCodeGenerator implements FileGenerator {
                         System.out.println("while");
                         System.out.println("*****************");
                     }
-                    //dummy
-                break;
-
-                case "INC_+1":
-                    //_code += "\nfld " + aux_uno;
-                    stack.push(aux_uno);
-                break;
-
-                case "NOT":
                     //dummy
                 break;
 
@@ -255,8 +264,9 @@ public class AsmCodeGenerator implements FileGenerator {
                         else if(triple.opcode.equals("BNE")){
                             _code += "\njne ";
                         }
-                        
+                        System.out.println("Antes lbl: " + triple.src + " POS: " + triple.position);
                         _code += "LBL"+Integer.parseInt(triple.src.substring(1, triple.src.length()-1));
+                        System.out.println("Depues lbl");
 
                         cmp = false;
                         continue;
@@ -270,62 +280,21 @@ public class AsmCodeGenerator implements FileGenerator {
                         _code += triple.src + ":";
                         continue;
                     }
-                    // if(asig){
-                        
-                    //     String val = stack.pop();
-                        
-                    //     System.out.println(val);
-
-                    //     Symbol symbol = SymbolTableGenerator.get_symbol_fromTable(val);
-                    //     if(symbol != null && (val.startsWith("_str") || symbol.type == SymbolTableGenerator.Type.CTE_STRING)){
-                    //         _code += "STRCPY " + triple.opcode + "," + val;
-                    //         asig = false;
-                    //         continue;
-                    //     }
-                    //     else{
-                    //         _code += "\nfld " + val;
-                    //         _code += "\nfstp " + triple.opcode;
-                    //         asig = false;
-                    //         continue;
-                    //     }
-                    // }
-                    // if(read){
-                    //   _code += "\ngetString " + triple.opcode;
-                    //   read = false;
-                    //   continue;
-                    // }
-                    // if(write){
-                    //     Symbol symbol = SymbolTableGenerator.get_symbol_fromTable(triple.opcode);
-                    //     if(symbol == null){
-                    //         System.out.println("ERROR");
-                    //         System.exit(0);
-                    //     }
-                    //     if(symbol.type == SymbolTableGenerator.Type.CTE_STRING){
-                    //         _code += "\ndisplayString " + triple.opcode;
-                    //     }
-                    //     else if(symbol.type == SymbolTableGenerator.Type.CTE_STRING){
-                    //         _code += "\nDisplayFloat " + triple.opcode + "," + aux_dec_int;
-                    //     }
-                    //     else if(symbol.type == SymbolTableGenerator.Type.CTE_STRING){
-                    //         _code += "\nDisplayFloat " + triple.opcode + "," + aux_dec_float;
-                    //     }
-                    //     _code += "\nnewLine\n";
-                    //     write = false;
-                    //     continue;
-                    // }
-
+ 
                     System.out.println("debug");
 
-                    Symbol symbol = SymbolTableGenerator.get_symbol_fromTable_byValue(triple.opcode);
+                    symbol = SymbolTableGenerator.get_symbol_fromTable_byValue(triple.opcode);
                     
                     String valueForStack = triple.opcode;
                     
+                    System.out.println("Entro por " + triple.opcode);
                     if(symbol.type == SymbolTableGenerator.Type.CTE_STRING
                         || symbol.type == SymbolTableGenerator.Type.CTE_FLOAT
                         || symbol.type == SymbolTableGenerator.Type.CTE_INT)
                     {
                         valueForStack = "_" + valueForStack;
                     }
+                    System.out.println("Pusheo " + valueForStack + " en la pila");
 
                     stack.push(valueForStack);
                 break;
@@ -334,7 +303,9 @@ public class AsmCodeGenerator implements FileGenerator {
     }
 
     private static List<Triple> extract_labels(List<Triple> triples) {
-        List<Triple> result = new ArrayList<Triple>(triples);
+        List<Triple> result = new ArrayList<Triple>();
+
+        List<Integer> labels = new ArrayList<Integer>();
 
         for(Triple triple : triples){
             if(triple.opcode.equals("BLE")
@@ -346,19 +317,26 @@ public class AsmCodeGenerator implements FileGenerator {
             {
                 System.out.println(triple.src);
                 int index = Integer.parseInt(triple.src.substring(1, triple.src.length()-1));
-                System.out.println(index);                
-                result.add(index, new Triple("LABEL", "LBL" + index, ""));
-                System.out.println("inserto");                
+                labels.add(index);
             }
         }
 
+        Integer count = 0;
+        for(Triple triple : triples) {
+            if(labels.contains(triple.position))
+            {
+                result.add(new Triple(count ++, "LABEL", "LBL" + triple.position, ""));
+            }
+            result.add(new Triple(count ++, triple.opcode, triple.src, triple.dest));
+        }
+        
+        System.out.println("PRINTING RESULT ***********");
+
         for(Triple triple : result){
-            System.out.print(triple.opcode);
-            System.out.print(triple.src);                
-            System.out.println(triple.dest);                
+            System.out.println("[" + triple.position + "] " + "(" + triple.opcode + ", " + triple.src + ", " + triple.dest + ")\n");
         }
 
-        System.out.println("end");
+        System.out.println("END PRINTING RESULT ***********");
         return result;
     }
 

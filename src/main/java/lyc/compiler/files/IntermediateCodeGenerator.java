@@ -21,6 +21,13 @@ public class IntermediateCodeGenerator implements FileGenerator {
             this.src = src;
             this.dest = dest;
         }
+
+        public Triple(int position, String opcode, String src, String dest) {
+            this.position = position;
+            this.opcode = opcode;
+            this.src = src;
+            this.dest = dest;
+        }
     }
 
     public static int getTripleCount() {

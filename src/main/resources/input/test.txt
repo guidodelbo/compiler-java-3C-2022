@@ -2,19 +2,11 @@
 
 init { 
  id1, id2: Int 
-
 } 
  
 /* ------------------------Asignacion------------------------ */
 
-id1 = 3
-id2 = 4
+id1 = 1
+id2 = FIB(7)
 
-if(id1 < id2){
-  id1 = 1 + 2 * 4
-}
-else{
-  id2 = 5
-}
-
-id2 = 2 + 2
+write(id2)

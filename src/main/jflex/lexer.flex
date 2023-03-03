@@ -188,7 +188,10 @@ WhiteSpace = {LineTerminator} | {Identation}
                                                                                 );
                                               }
 
-                                              SymbolTableGenerator.addSymbol("_" + yytext(),SymbolTableGenerator.Type.CTE_STRING, yytext());
+                                              //Remove quotes from string
+                                              String stringValue = yytext().replace("\"", "");
+
+                                              SymbolTableGenerator.addSymbol("_" + stringValue.replace(" ", ""),SymbolTableGenerator.Type.CTE_STRING, stringValue);
                                               return symbol(ParserSym.STRING_CONSTANT, yytext()); 
                                             }
                 

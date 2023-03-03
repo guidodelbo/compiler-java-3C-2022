@@ -229,6 +229,7 @@ selection ::=   IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET progra
                             {:
                                 if(debug) { System.out.println("Selection with empty else and program"); } 
 
+                                Integer inconditionalJumpIndex = IntermediateCodeGenerator.addTriple("BI",  "[?]");
 
                                 CurrentTriple = IntermediateCodeGenerator.getTripleCount();
 
@@ -244,7 +245,6 @@ selection ::=   IF OPEN_BRACKET condition CLOSE_BRACKET OPEN_CURLYBRACKET progra
                                     ConditionCounter--;
                                 }
 
-                                Integer inconditionalJumpIndex = IntermediateCodeGenerator.addTriple("BI",  "[?]");
                                 IntermediateCodeGenerator.stackPush(inconditionalJumpIndex);
 
                             :}
@@ -497,9 +497,9 @@ factor ::= FLOAT_CONSTANT:constant
                                     :};
 
 //I/O  GCI OK
-input ::= READ OPEN_BRACKET IDENTIFIER:id CLOSE_BRACKET {: if(debug) { System.out.println("Input"); } IntermediateCodeGenerator.addTriple("read", id); :};
-output ::= WRITE OPEN_BRACKET STRING_CONSTANT:constant CLOSE_BRACKET {: if(debug) { System.out.println("Output"); } IntermediateCodeGenerator.addTriple("write", constant); :};
-output ::= WRITE OPEN_BRACKET IDENTIFIER:id CLOSE_BRACKET {: if(debug) { System.out.println("Output"); } IntermediateCodeGenerator.addTriple("write", id); :};
+input ::= READ OPEN_BRACKET IDENTIFIER:id CLOSE_BRACKET {: if(debug) { System.out.println("Input"); } IntermediateCodeGenerator.addTriple("READ", id); :};
+output ::= WRITE OPEN_BRACKET STRING_CONSTANT:constant CLOSE_BRACKET {: if(debug) { System.out.println("Output"); } IntermediateCodeGenerator.addTriple("WRITE", constant); :};
+output ::= WRITE OPEN_BRACKET IDENTIFIER:id CLOSE_BRACKET {: if(debug) { System.out.println("Output"); } IntermediateCodeGenerator.addTriple("WRITE", id); :};
 
 //Temas Especiales
 //FIB GCI PENDING
@@ -509,66 +509,79 @@ factor ::= FIBONACCI OPEN_BRACKET fibovalue CLOSE_BRACKET
                                         //Generate the code for the Fibonacci function in the Intermediate Code
                                         
                                         // int valor, first = 0, second = 1, next, current = 0;
-                                        // while ( n > 0 )
+                                        // while ( fiboPosition > 0 )
                                         // {
-                                        //     if ( c <= 1 )
+                                        //     if ( current <= 1 )
                                         //         next = c;
+                                        //         current ++;
                                         //     else
                                         //     {
                                         //         next = first + second;
                                         //         first = second;
                                         //         second = next;
                                         //     }
-                                        //     n--;
+                                        //     fiboPosition--;
                                         //     printf("%d\n",next);
                                         // }
                                         // result = next;
 
-                                        int fiboPositionIndex = IntermediateCodeGenerator.addTriple("@fiboPosition");
-                                        IntermediateCodeGenerator.addTriple("=",  "[" + fiboPositionIndex + "]",  "[" + FiboValueIndex + "]");
+                                        SymbolTableGenerator.addSymbol("@fiboPosition", SymbolTableGenerator.Type.INT, "@fiboPosition");
+                                        SymbolTableGenerator.addSymbol("@first", SymbolTableGenerator.Type.INT, "@first");
+                                        SymbolTableGenerator.addSymbol("@second", SymbolTableGenerator.Type.INT, "@second");
+                                        SymbolTableGenerator.addSymbol("@next", SymbolTableGenerator.Type.INT, "@next");
+                                        SymbolTableGenerator.addSymbol("@current", SymbolTableGenerator.Type.INT, "@current");
+                                        SymbolTableGenerator.addSymbol("_0", SymbolTableGenerator.Type.CTE_INT, "0");
+                                        SymbolTableGenerator.addSymbol("_1", SymbolTableGenerator.Type.CTE_INT, "1");
+
+
+                                        IntermediateCodeGenerator.addTriple("=",  "@fiboPosition",  "[" + FiboValueIndex + "]");
 
                                         // int valor, first = 0, second = 1, next, current = 0;
-                                        int fiboFirstIndex = IntermediateCodeGenerator.addTriple("@first");
-                                        IntermediateCodeGenerator.addTriple("=",  "[" + fiboFirstIndex + "]", 0);
+                                        IntermediateCodeGenerator.addTriple("=",  "@first", "[" + IntermediateCodeGenerator.addTriple("0") + "]");
                                         
-                                        int fiboSecondIndex = IntermediateCodeGenerator.addTriple("@second");
-                                        IntermediateCodeGenerator.addTriple("=",  "[" + fiboSecondIndex + "]", 1);
+                                        IntermediateCodeGenerator.addTriple("=",  "@second", "[" + IntermediateCodeGenerator.addTriple("1") + "]");
                                         
                                         int fiboNextIndex = IntermediateCodeGenerator.addTriple("@next");
-
-                                        int fiboCurrentIndex = IntermediateCodeGenerator.addTriple("@current");
-                                        IntermediateCodeGenerator.addTriple("=",  "[" + fiboCurrentIndex + "]", 0);
+                                        
+                                        IntermediateCodeGenerator.addTriple("=",  "@current", "[" + IntermediateCodeGenerator.addTriple("0") + "]");
+                                        
 
                                         // while ( n > 0 ) fiboPositionIndex = n
-                                        int FiboStartIndex = IntermediateCodeGenerator.addTriple("CMP",  "[" + fiboPositionIndex + "]",  "0" );
+                                        int FiboStartIndex = IntermediateCodeGenerator.addTriple("@fiboPosition");
+                                        IntermediateCodeGenerator.addTriple("CMP",  "[" + FiboStartIndex + "]", "[" + IntermediateCodeGenerator.addTriple("0") + "]" );
                                         //La cantidad de saltos van a ser fijos, por lo tanto podemos hardcodear el valor
-                                        IntermediateCodeGenerator.addTriple("BLE",  "[" + (FiboStartIndex + 13) + "]");
+                                        IntermediateCodeGenerator.addTriple("BLE",  "[" + (FiboStartIndex + 28) + "]");
                                         
                                         //     if ( c <= 1 )
-                                        ComparatorIndex = IntermediateCodeGenerator.addTriple("CMP",  "[" + fiboCurrentIndex + "]",  "1" );
-                                        int FiboElseIndex = ComparatorIndex + 2;
-                                        IntermediateCodeGenerator.addTriple("BGT",  "[" + FiboElseIndex + "]",  "1" );
+                                        ComparatorIndex = IntermediateCodeGenerator.addTriple("CMP",  "[" + IntermediateCodeGenerator.addTriple("@current") + "]", "[" + IntermediateCodeGenerator.addTriple("1") + "]" );
+                                        int FiboElseIndex = ComparatorIndex + 9;
+                                        IntermediateCodeGenerator.addTriple("BGT",  "[" + FiboElseIndex + "]");
 
                                         //         next = c;
-                                        int FiboAuxIndex = IntermediateCodeGenerator.addTriple("=",  "[" + fiboNextIndex + "]", "[" + fiboCurrentIndex + "]");
+                                        int FiboAuxIndex = IntermediateCodeGenerator.addTriple("=",  "@next", "[" + IntermediateCodeGenerator.addTriple("@current") + "]");
+                                        
+                                        //         current ++;
+                                        int currentAddIndex = IntermediateCodeGenerator.addTriple("+", "[" + IntermediateCodeGenerator.addTriple("@current") + "]", "[" + IntermediateCodeGenerator.addTriple("1") + "]");
+                                        IntermediateCodeGenerator.addTriple("=", "@current", "[" + currentAddIndex + "]" );
+
                                         //La cantidad de saltos van a ser fijos, por lo tanto podemos hardcodear el valor
-                                        IntermediateCodeGenerator.addTriple("BI",  "[" + (FiboAuxIndex + 6 ) + "]");
+                                        IntermediateCodeGenerator.addTriple("BI",  "[" + (FiboAuxIndex + 15 ) + "]");
 
                                         //     else
                                         //         next = first + second;
-                                        int FiboAddIndex = IntermediateCodeGenerator.addTriple("+", "[" + fiboFirstIndex + "]", "[" + fiboSecondIndex + "]");
-                                        IntermediateCodeGenerator.addTriple("=", "[" + fiboNextIndex + "]", "[" + FiboAddIndex + "]" );
+                                        int FiboAddIndex = IntermediateCodeGenerator.addTriple("+", "[" + IntermediateCodeGenerator.addTriple("@first") + "]", "[" + IntermediateCodeGenerator.addTriple("@second") + "]");
+                                        IntermediateCodeGenerator.addTriple("=", "@next", "[" + FiboAddIndex + "]" );
 
                                         //         first = second;
-                                        IntermediateCodeGenerator.addTriple("=", "[" + fiboFirstIndex + "]", "[" + fiboSecondIndex + "]" );
+                                        IntermediateCodeGenerator.addTriple("=", "@first", "[" + IntermediateCodeGenerator.addTriple("@second") + "]" );
 
 
                                         //         second = next;
-                                        IntermediateCodeGenerator.addTriple("=", "[" + fiboSecondIndex + "]", "[" + fiboNextIndex + "]" );
+                                        IntermediateCodeGenerator.addTriple("=", "@second", "[" + IntermediateCodeGenerator.addTriple("@next") + "]" );
 
                                         //     n--;
-                                        int FiboSubIndex = IntermediateCodeGenerator.addTriple("-", "[" + fiboPositionIndex + "]", "1");
-                                        IntermediateCodeGenerator.addTriple("=", "[" + fiboPositionIndex + "]", "[" + FiboSubIndex + "]" );
+                                        int FiboSubIndex = IntermediateCodeGenerator.addTriple("-", "[" + IntermediateCodeGenerator.addTriple("@fiboPosition") + "]", "[" + IntermediateCodeGenerator.addTriple("1") + "]");
+                                        IntermediateCodeGenerator.addTriple("=", "@fiboPosition", "[" + FiboSubIndex + "]" );
 
                                         // fin while
                                         IntermediateCodeGenerator.addTriple("BI",  "[" + FiboStartIndex + "]");
@@ -577,11 +590,13 @@ factor ::= FIBONACCI OPEN_BRACKET fibovalue CLOSE_BRACKET
           
                                     
                                     :};
+
 fibovalue ::= IDENTIFIER:id  {: if(debug) { System.out.println("fibovalue Id: " + id); } 
                                 FiboValueIndex = IntermediateCodeGenerator.addTriple(id); 
                                 //VER si esta declarado y si el tipo es INT. Despues validar si es mayor a 0
                                 SymbolTableGenerator.checkSymbol(id, SymbolTableGenerator.Type.INT);
                             :};
+
 fibovalue ::= INTEGER_CONSTANT:constant {: if(debug) { System.out.println("fibovalue Int Constant: " + constant ); } 
                                             FiboValueIndex = IntermediateCodeGenerator.addTriple(constant); 
                                             //VALIDAR QUE SEA NATURAL > 0
@@ -590,7 +605,6 @@ fibovalue ::= INTEGER_CONSTANT:constant {: if(debug) { System.out.println("fibov
                                                 System.exit(1);
                                             }
                                         :};
-
 
 //ElementInTheMiddle GCI OK
 factor ::= ELEMENTINTHEMIDDLE OPEN_BRACKET elementList CLOSE_BRACKET 
